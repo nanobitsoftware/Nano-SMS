@@ -86,7 +86,7 @@ int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr,int fun)
 
     MSG msg;
 
-
+    GiveError("Hello from SMS!", TRUE);
 
 
     while (GetMessage(&msg, NULL, 0, 0))

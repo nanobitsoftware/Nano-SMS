@@ -98,6 +98,11 @@
 
 HWND mainwindow; // The main window handle, used for all windows.
 HINSTANCE g_hInst; // Global instance handle for the application.
+
+char ERROR_STRING[1024]; // Global error string for the application. Used to store error messages.
+
+
+
 // GLOBALS END
 
 
@@ -109,11 +114,11 @@ HINSTANCE g_hInst; // Global instance handle for the application.
 #define realloc(x, y) nano_realloc (x,y, __FILE__, __LINE__)
 #define str_dup(x)  str_dup1(x, __FILE__, __LINE__)
 #define strprefix(x,y) strprefix1(x, y)
-#define sprintf(x, ...) _sprintf(x)
-#define vsprintf(x) _vsprintf(x)
-#define strcat(x,y) _strcat(x, y)
-#define strtok(x,y) _strtok(x, y)
-#define localtime(x) _localtime(x)
+//deefine sprintf(x, ...) _sprintf(x)
+//#define vsprintf(x) _vsprintf(x)
+//#define strcat(x,y) _strcat(x, y)
+//#define strtok(x,y) _strtok(x, y)
+//#define localtime(x) _localtime(x)
 
 
 // FUNCTION MAPPING END

@@ -149,7 +149,7 @@ char* str_dup1(const char* str, char* file, int line)
 
 		return (char*)0;
 	}
-	_strcpy(result, str);
+	strcpy(result, str);
 	return result;
 }
 
