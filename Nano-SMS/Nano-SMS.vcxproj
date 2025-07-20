@@ -141,7 +141,11 @@
   <ItemGroup>
     <ClInclude Include="src\nano-sms.h" />
     <ClInclude Include="src\NWC.h" />
+    <ClInclude Include="src\sms_db.h" />
     <ClInclude Include="src\sqlite3\sqlite3.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

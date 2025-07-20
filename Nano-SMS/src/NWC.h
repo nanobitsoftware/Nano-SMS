@@ -65,7 +65,7 @@ struct NWC_Parent
 	int control_count;
 	int max_controls;
 
-	LPCWSTR* name;
+	char* name;
 
 	void  (*create_child)(void*, ...);
 	void* create_widget;

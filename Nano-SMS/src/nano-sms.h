@@ -48,7 +48,7 @@
 
     // Boiler plate; makes include files easier to manage, and keeps the code cleaner.
 
-
+#include <Windows.h>
 
 
 #define WIN32_LEAN_AND_MEAN 
@@ -58,7 +58,7 @@
 /* MSVC, hell, c in general, has poor support for boolean types.
    So we will define our own boolean type, and use it throughout the code.
    This will make it easier to port to other compilers, and make the code
-   more readable. 
+   more readable.
  */
 
 // DEFINES BEGIN
@@ -69,12 +69,12 @@
 #define IS_IN_DEBUGGING_MODE FALSE // Set to TRUE to enable debugging mode. This will enable more verbose logging and error checking.
 #define REPORT_ALLOCATION 0 // Set to TRUE to enable allocation reporting. This will report all allocations and deallocations.
 #define REPORT_DEALLOCATION 0 // Set to TRUE to enable deallocation reporting. This will report all deallocations and memory leaks.
-#define LOG(...) if (IS_IN_DEBUGGING_MODE) { fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } // Simple logging macro for debugging.
+
 
 #define LOWER(c)        ((c) >= 'A' && (c) <= 'Z' ? (c)+'a'-'A' : (c))
 #define UPPER(c)        ((c) >= 'a' && (c) <= 'z' ? (c)+'A'-'a' : (c))
 
-
+#define DEBUG_FILE "debug.log"
 
 
 
@@ -83,23 +83,27 @@
 
 
 
- 
+
  // GLOBALS BEGIN
 
 /* Note: I don't really like using globals in programs. However, it IS
    Accepted as a beast we must endure; kind of like GOTO. That is why
    I will try my best to keep them at a very small amount.
       */
-   
-#define  APP_NAME  "Nano-SMS"; // The name of the application.
-#define  APP_VERSION  "0.1.0"; // The version of the application.
-#define  APP_AUTHOR  "Bi0teQ @ NanobitSoftware."; // The author of the application.
-#define  APP_LICENSE  "GPLv3"; // The license of the application.
-
 HWND mainwindow; // The main window handle, used for all windows.
 HINSTANCE g_hInst; // Global instance handle for the application.
 
 char ERROR_STRING[1024]; // Global error string for the application. Used to store error messages.
+
+#define  APP_NAME  "Nano-SMS" // The name of the application.
+#define  APP_VERSION  "0.1.0" // The version of the application.
+#define  APP_AUTHOR  "Bi0teQ @ NanobitSoftware." // The author of the application.
+#define  APP_LICENSE  "GPLv3" // The license of the application.
+
+
+
+
+
 
 
 
@@ -137,11 +141,11 @@ typedef struct mediaitem MEDIA_ITEM;
 
 /* SMS Backup and Restore uses a form of XML for its storage of the sms, call and media
    backups. I really don't want to implement an XML parser, nor do I want to use a
-   prebuilt parsing library because of certain features I wish to implement. 
+   prebuilt parsing library because of certain features I wish to implement.
    This might make it harder in the long run, keeping with updates from them, I think
    it should work just fine. Maybe in time I will implement a barebones XML parser
    just to make updating it easier.
-   
+
    Because of that, I will rely on a few data structures that will interlink and form
    sort of a tree design, but is not a "tree" in the programming sense.*/
 
@@ -188,7 +192,9 @@ struct smsbackup
 // DATA STRUCTURES END
 
 // PROTOTYPES BEGIN
-
+void     LOG( char*, ... );
+void write_buffer( const char* );
+int read_string( char, FILE* fp );
 
 
 /* Prototypes from nano-sms.c*
@@ -200,7 +206,7 @@ struct smsbackup
 BOOL str_search( const char* str );
 BOOL string_compare( const char* ostr, const char* tstr );
 BOOL strprefix1( const char* astr, const char* bstr );
-char* str_dup1(const char* str, char* file, int line);
+char* str_dup1( const char* str, char* file, int line );
 
 //BEGIN */
 
@@ -212,11 +218,11 @@ char* str_dup1(const char* str, char* file, int line);
 /* Prototypes from memory.c*
 //BEGIN */
 
-void GiveError(char* wrong, BOOL KillProcess);
-void nano_free(void* seg, const char* file, int line);
-void* nano_malloc(size_t, const char*, int);
-void* nano_realloc(void* seg, size_t sz, const char* file, int line);
-char* str_dup1(const char* str, char* file, int line);
+void GiveError( char* wrong, BOOL KillProcess );
+void nano_free( void* seg, const char* file, int line );
+void* nano_malloc( size_t, const char*, int );
+void* nano_realloc( void* seg, size_t sz, const char* file, int line );
+char* str_dup1( const char* str, char* file, int line );
 
 
 //END

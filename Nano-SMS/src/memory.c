@@ -143,7 +143,7 @@ void add_heap(HEAP* hp)
         LOG("Allocation:");
         LOG("Calling file: %s", hp->file);
         LOG("Calling line: %d", hp->line);
-        LOG("Calling size: %lu", hp->size);
+        LOG("Calling size: %zu", hp->size);
         LOG("Total allocation: %5.5f %s", t_total, b_type == 0 ? "bytes" : b_type == 1 ? "kilobytes" : b_type == 2 ? "megabytes" : "gigabytes");
         LOG("Calling address (returned): 0X%X", hp->m_add);
         LOG("--------------------------------------------------------------------------------------------------\r\n");
@@ -258,7 +258,7 @@ void show_heap(void)
 void walk_heap(void)
 {
     unsigned long int i = 0;
-    unsigned long int count = 0;
+    size_t  count = 0;
     HEAP* hp;
 
     if (!IS_IN_DEBUGGING_MODE)
@@ -270,14 +270,14 @@ void walk_heap(void)
         LOG("Walkheap: %d) m_add: 0x%x, file: %s, line: %d", i, hp->m_add == 0 ? 0 : hp->m_add, hp->file == NULL ? "Undefined" : hp->file, hp->line);
         count += hp->size;
     }
-    LOG("Walkheap: Total size unfreed: %d bytes", count);
+    LOG("Walkheap: Total size unfreed: %d bytes", (unsigned long)count);
     LOG("Walkheap: Allocations called: %d. Deallocations called: %d, total: %d. (This number SHOULD be zero. \n\tIf not, then we got some problems.\n", alloced, unalloced, alloced - unalloced);
 }
 
 void dump_heap(void)
 {
     unsigned long int i = 0;
-    unsigned long int count = 0;
+   size_t count = 0;
     unsigned long int total = 0;
     char buf[5000];
 
@@ -295,7 +295,7 @@ void dump_heap(void)
         total++;
     }
 
-    LOG("Dumpheap: %d total allocations managed. %lu bytes size total. Total alloc: %d\r\n", total, count, total_alloc);
+    LOG("Dumpheap: %d total allocations managed. %zu bytes size total. Total alloc: %lld\r\n", total, count, total_alloc);
     //give_term_debug("Dumpheap: %d total allocations managed. %s size total.\r\n", total,commaize(count, buf));
     return;
 }
@@ -366,7 +366,7 @@ void del_heap(unsigned long int m_add, int line, char* file)
             found = TRUE;
             if (REPORT_DEALLOCATION)
             {
-                LOG("Size freeing: %lu", h->size);
+                LOG("Size freeing: %zu", h->size);
             }
 
             if (h->prev != NULL)
@@ -413,14 +413,14 @@ void del_heap(unsigned long int m_add, int line, char* file)
 
 void* nano_malloc(size_t chunk, const char* file, int line)
 {
-    int upper_mult;
+    size_t upper_mult;
     void* mem;
     char* tail;
     size_t old_size = 0;
 
     char madd[32];
 
-    unsigned long long int m_add = 0;
+    unsigned  long int m_add = 0;
 
     extern char ERROR_STRING[1024];
 
@@ -469,7 +469,7 @@ void* nano_malloc(size_t chunk, const char* file, int line)
         HEAP* h;
         sprintf(madd, "%p", mem);
 
-        m_add = strtoull(madd, &tail, 16);
+        m_add = (unsigned long int)strtoull(madd, &tail, 16);
         old_size += sizeof(MEM_TYPE);
         h = new_heap();
         h->m_add = m_add;
@@ -495,7 +495,7 @@ void nano_free(void* seg, const char* file, int line)
     char* tail;
     char s[20];
     static char t_t;
-    int i;
+    
 
     if (!seg || seg == NULL)
     {
@@ -507,7 +507,7 @@ void nano_free(void* seg, const char* file, int line)
     {
         sprintf(madd, "%p", ((char*)seg - sizeof(MEM_TYPE)));
         m_add = strtoull(madd, &tail, 16);
-        del_heap(m_add, line, (char*)file);
+        del_heap((unsigned long )m_add, line, (char*)file);
         madd[0] = '\0';
     }
 
@@ -571,9 +571,10 @@ void* nano_realloc(void* seg, size_t sz, const char* file, int line)
     }
 
     total_alloc -= (*((int*)seg - sizeof(MEM_TYPE)));
-    seg = (char*)seg - sizeof(MEM_TYPE);
+    seg = (char*)seg - sizeof( MEM_TYPE );
     to_ret = realloc(seg, sz);
-    *((DWORD*)seg) = sz;
+    memset( seg, 0, sz + sizeof( MEM_TYPE ) );
+    //*((DWORD*)seg) = sz;
 
     total_alloc += sz;
 
@@ -587,5 +588,6 @@ void return_usage(void)
 
 unsigned long int get_memory_usage()
 {
-    return total_alloc;
+    return (unsigned long int)total_alloc;
 }
+

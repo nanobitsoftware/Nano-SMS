@@ -207,7 +207,7 @@ NWC_PARENT* create_parent(char* name)
 		}
 	}
 
-	p_window->name = (LPCWSTR*)str_dup(name);
+	p_window->name = str_dup(name);
 	p_window->index = IDX;
 	p_window->controls = (NWC_CTRL**)malloc(20 * sizeof(NWC_CTRL*)); // Start with a max of 10 controls. This is dynamic!
 	p_window->max_controls = 10;
@@ -281,7 +281,7 @@ BOOL show_parent(NWC_PARENT* p_window)
 		wc.cbWndExtra = 0;
 		wc.hbrBackground = (HBRUSH)(COLOR_WINDOW);
 		wc.lpfnWndProc = (WNDPROC)p_window->control_proc;
-		wc.lpszClassName =(LPCWSTR) p_window->name;
+		wc.lpszClassName =(LPCSTR) p_window->name;
 		wc.lpszMenuName = NULL;
 		wc.hInstance = p_window->instance;
 		wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
@@ -289,7 +289,7 @@ BOOL show_parent(NWC_PARENT* p_window)
 		wc.style = CS_DBLCLKS;
 		RegisterClass(&wc);
 
-		p_window->window_pointer = CreateWindowEx((DWORD)p_window->window_options, (LPCWSTR)p_window->name, (LPCWSTR)p_window->name, (DWORD)p_window->style_options, p_window->x, p_window->y, p_window->width, p_window->heigth, p_window->window_control, 0, p_window->instance, 0);
+		p_window->window_pointer = CreateWindowEx((DWORD)p_window->window_options, (LPCSTR)p_window->name, (LPCSTR)p_window->name, (DWORD)p_window->style_options, p_window->x, p_window->y, p_window->width, p_window->heigth, p_window->window_control, 0, p_window->instance, 0);
 
 		if (p_window->window_control == 0)
 			p_window->window_control = p_window->window_pointer;
@@ -605,7 +605,7 @@ BOOL AddButton_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width,
 		show_parent(p_window);
 	}
 
-	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, WC_BUTTON, (LPCWSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR )ctrl->id, g_hInst, 0);
+	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, WC_BUTTON, (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR )ctrl->id, g_hInst, 0);
 	CTRL_ChangeFont(p_window, ctrl->name, "Courier New");
 	ShowWindow(ctrl->handle, SW_SHOW);
 	return TRUE;
@@ -694,7 +694,7 @@ BOOL AddStatic_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width,
 		show_parent(p_window);
 	}
 
-	ctrl->handle = CreateWindowEx(WS_EX_WINDOWEDGE, (LPCWSTR)"STATIC", (LPCWSTR)ctrl->name, ctrl->style | WS_CHILD, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
+	ctrl->handle = CreateWindowEx(WS_EX_WINDOWEDGE, (LPCSTR)"STATIC", (LPCSTR)ctrl->name, ctrl->style | WS_CHILD, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
 	CTRL_ChangeFont(p_window, ctrl->name, "Courier New");
 	ShowWindow(ctrl->handle, SW_SHOW);
 	return TRUE;
@@ -747,7 +747,7 @@ BOOL AddCheck_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, 
 		show_parent(p_window);
 	}
 
-	ctrl->handle = CreateWindowEx(WS_EX_WINDOWEDGE, (LPCWSTR)"BUTTON", (LPCWSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
+	ctrl->handle = CreateWindowEx(WS_EX_WINDOWEDGE, (LPCSTR)"BUTTON", (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
 	CTRL_ChangeFont(p_window, ctrl->name, "Courier New");
 
 	ShowWindow(ctrl->handle, SW_SHOW);
@@ -861,7 +861,7 @@ BOOL AddRadio_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, 
 		show_parent(p_window);
 	}
 
-	ctrl->handle = CreateWindowEx(WS_EX_WINDOWEDGE, (LPCWSTR)"BUTTON", (LPCWSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
+	ctrl->handle = CreateWindowEx(WS_EX_WINDOWEDGE, (LPCSTR)"BUTTON", (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
 	ShowWindow(ctrl->handle, SW_SHOW);
 	return TRUE;
 }
@@ -913,7 +913,7 @@ BOOL AddCombo_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, 
 		show_parent(p_window);
 	}
 
-	ctrl->handle = CreateWindowEx(WS_EX_WINDOWEDGE, (LPCWSTR)"COMBOBOX", (LPCWSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
+	ctrl->handle = CreateWindowEx(WS_EX_WINDOWEDGE, (LPCSTR)"COMBOBOX", (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
 	ShowWindow(ctrl->handle, SW_SHOW);
 	return TRUE;
 }
@@ -968,7 +968,7 @@ BOOL AddEdit_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, i
 		show_parent(p_window);
 	}
 
-	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT, (LPCWSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_control, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
+	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT, (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_control, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
 	//CreateWindowEx((DWORD)p_window->window_options, p_window->name, p_window->name,(DWORD)p_window->style_options, p_window->x, p_window->y, p_window->width, p_window->heigth, p_window->window_control, 0, p_window->instance, 0);
 	CTRL_SetText(ctrl->parent, ctrl->name, "");
 	CTRL_ChangeFont(p_window, ctrl->name, "Courier New");
@@ -1027,7 +1027,7 @@ void CTRL_ChangeFont(NWC_PARENT* p_window, char* name, char* fontname)
 
 	if (!font)
 	{
-		if ((font = CreateFont(15, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, DEFAULT_QUALITY, 0, (LPCWSTR)fontname)) == NULL)
+		if ((font = CreateFont(15, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, DEFAULT_QUALITY, 0, (LPCSTR)fontname)) == NULL)
 		{
 			GiveError("Error creating font.", FALSE);
 			return;
@@ -1480,7 +1480,7 @@ void clist_add_col(NWC_PARENT* p_window, char* name, int width, char* text)
 	pcol.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	pcol.fmt = LVCFMT_LEFT;
 	pcol.cx = width;
-	pcol.pszText = (LPCWSTR)text;
+	pcol.pszText = (LPSTR)text;
 
 	if (ListView_InsertColumn(ctrl->handle, ctrl->clist_index, &pcol) == -1)
 	{
@@ -1548,7 +1548,7 @@ void clist_add_data(NWC_PARENT* p_window, char* name, char** text, int count)
 	listItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM | LVIF_STATE | LVIF_DI_SETITEM;
 	listItem.state = 0;
 	listItem.stateMask = 0;
-	listItem.pszText = (LPCWSTR)text[0];
+	listItem.pszText = (LPSTR)text[0];
 	listItem.iItem = ctrl->clist_index;
 
 	listItem.iSubItem = 0;
@@ -1562,7 +1562,7 @@ void clist_add_data(NWC_PARENT* p_window, char* name, char** text, int count)
 		subItem.iItem = ctrl->clist_index;
 		subItem.iSubItem = i;
 		subItem.mask = LVIF_TEXT;
-		subItem.pszText = (LPCWSTR)text[i];
+		subItem.pszText = (LPSTR)text[i];
 		ListView_SetItem(ctrl->handle, &subItem);
 		//ctrl->clist_index++;
 	}
@@ -1618,7 +1618,7 @@ BOOL AddRichedit_Parent(NWC_PARENT* p_window, char* name, int x, int y, int widt
 		show_parent(p_window);
 	}
 
-	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, (LPCWSTR)"RICHEDIT", (LPCWSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
+	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, (LPCSTR)"RICHEDIT", (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
 	ShowWindow(ctrl->handle, SW_SHOW);
 	return TRUE;
 }
@@ -1672,7 +1672,7 @@ BOOL AddList_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, i
 		show_parent(p_window);
 	}
 
-	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, (LPCWSTR)"LISTBOX", (LPCWSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
+	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, (LPCSTR)"LISTBOX", (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
 	ShowWindow(ctrl->handle, SW_SHOW);
 	return TRUE;
 }
@@ -1728,7 +1728,7 @@ BOOL AddCList_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, 
 		show_parent(p_window);
 	}
 
-	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, (LPCWSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR )ctrl->id, g_hInst, 0);
+	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR )ctrl->id, g_hInst, 0);
 	sstyle = (int)SendMessage(ctrl->handle, LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
 	sstyle = style | LVS_EX_FULLROWSELECT;
 	SendMessage(ctrl->handle, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, sstyle);

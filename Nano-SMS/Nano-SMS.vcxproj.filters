@@ -44,5 +44,13 @@
     <ClInclude Include="src\nano-sms.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\sms_db.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
