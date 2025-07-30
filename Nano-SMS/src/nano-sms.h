@@ -49,7 +49,7 @@
     // Boiler plate; makes include files easier to manage, and keeps the code cleaner.
 
 #include <Windows.h>
-
+#include <ctime>
 
 #define WIN32_LEAN_AND_MEAN 
 

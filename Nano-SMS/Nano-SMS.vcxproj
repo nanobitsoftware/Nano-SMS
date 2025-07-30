@@ -132,17 +132,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\DB.c" />
+    <ClCompile Include="src\io.c" />
     <ClCompile Include="src\memory.c" />
     <ClCompile Include="src\nano-sms.c" />
     <ClCompile Include="src\NWC_main.c" />
+    <ClCompile Include="src\SMS-GUI.c" />
     <ClCompile Include="src\sqlite3\sqlite3.c" />
     <ClCompile Include="src\strings.c" />
+    <ClCompile Include="src\XML-parse.c" />
+    <ClCompile Include="src\XML-snarf.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\nano-sms.h" />
     <ClInclude Include="src\NWC.h" />
     <ClInclude Include="src\sms_db.h" />
     <ClInclude Include="src\sqlite3\sqlite3.h" />
+    <ClInclude Include="src\XML.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" />

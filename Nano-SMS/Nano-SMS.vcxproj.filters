@@ -33,6 +33,21 @@
     <ClCompile Include="src\memory.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\XML-parse.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\XML-snarf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SMS-GUI.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DB.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\io.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\NWC.h">
@@ -46,6 +61,9 @@
     </ClInclude>
     <ClInclude Include="src\sms_db.h">
       <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\XML.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
