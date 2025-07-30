@@ -47,7 +47,7 @@
 
 
 
-#include <ctime>
+#include <time.h>
 
 
 // !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! 
@@ -81,7 +81,7 @@
     char* name; // Name of the node.
     char* value; // Value of the node.
     XML_NODE_PARENT* next; // Next node in the list.
-    AML_NODE_CHILD* child; // Child nodes. .. Also works as "First child"
+    XML_NODE_CHILD* child; // Child nodes. .. Also works as "First child"
     int type; // Type of node, 0 = element, 1 = text, 2 = comment, etc.
     int line; // Line number in the XML file.
     int column; // Column number in the XML file.

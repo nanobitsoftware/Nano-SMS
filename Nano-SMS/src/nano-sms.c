@@ -132,6 +132,7 @@ WINAPI WinMain( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
 
     // Initialize our DB
     check_or_create_db();
+    GiveError("Within windows main function and will now be exiing.", TRUE);
     exit( 12 );
 
     while (GetMessage( &msg, NULL, 0, 0 ))
