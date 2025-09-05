@@ -4,19 +4,20 @@
    that it exists in as well. So consider this the master of NWC_main.c for now.
   */
 
-
+#include <windows.h>
+#include <commctrl.h>
 #include <stdio.h>
 #include <string.h>
+#include <commdlg.h>
+#include <minwinbase.h>
+#include <stdarg.h>
+#include <stdbool.h>
 #include <stdlib.h>
-#include <time.h>
-#include <windows.h>
-#include <winsock.h>
-#include <richedit.h>
-#include <assert.h>
-#include <commctrl.h>
+
 
 #include "nano-sms.h"
 #include "NWC.h"
+
 
 /* Nomenclature is bound to change in the near future (parent moving to simply 'window' and the like)
  * so do not keep too much stock in the current names. */
@@ -24,8 +25,8 @@
 int IDX;
 BOOL INITIALIZED;
 
-NWC_PARENT* fake_window; // So we never return NULL
-NWC_CTRL* fake_control; // So we never return NULL
+NWC_PARENT *fake_window; // So we never return NULL
+NWC_CTRL *fake_control; // So we never return NULL
 
 static HANDLE hDevMode, hDevNames;
 
@@ -36,1814 +37,1814 @@ static HANDLE hDevMode, hDevNames;
    In future released, this will be negated. So for now, use and make a global for it.
    */
 
-void SetFocusInternal(HWND h)
+void SetFocusInternal ( HWND h )
 {
-	if (h)
-		SetFocus(h);
-	else
-		SetFocus(mainwindow);
+    if ( h )
+        SetFocus ( h );
+    else
+        SetFocus ( mainwindow );
 }
-void initialize_windows(void)
+void initialize_windows ( void )
 {
-	int i;
+    int i;
 
-	if (INITIALIZED == TRUE)
-	{
-		return;
-	}
+    if ( INITIALIZED == TRUE )
+    {
+        return;
+    }
 
-	IDX = 0;
-	INITIALIZED = TRUE;
-	max_parents = 100;
-	parents = (NWC_PARENT**)malloc(max_parents * sizeof(*parents));
+    IDX = 0;
+    INITIALIZED = TRUE;
+    max_parents = 100;
+    parents = ( NWC_PARENT ** )malloc ( max_parents * sizeof ( *parents ) );
 
-	current_parents = 0;
+    current_parents = 0;
 
-	for (i = 0; i < max_parents; i++)
-		parents[i] = NULL;
+    for ( i = 0; i < max_parents; i++ )
+        parents[i] = NULL;
 
-	if (!fake_window) // So we don't do it twice and leak.
-		fake_window = create_parent("EMPTY WINDOW");
-	if (!fake_control)
-		fake_control = new_control();
-	return;
-}
-
-NWC_PARENT* parent_initialize(void)
-{
-	NWC_PARENT* p_window;
-	p_window = (NWC_PARENT*)malloc(sizeof(*p_window));
-	if (!p_window)
-	{
-		GiveError("Allocation for window memory has failed.\nProgram will now exit gracefully.", TRUE);
-	}
-
-	p_window->name = NULL;
-	p_window->self = p_window;
-	p_window->child = NULL;
-	p_window->children = 0;
-	p_window->control_proc = NULL;
-	p_window->create_child = NULL;
-	p_window->create_widget = (void*)nwc_widget_create_entry(p_window);
-	p_window->destroy_child = NULL;
-	p_window->destroy_self = NULL;
-	p_window->heigth = 0;
-	p_window->width = 0;
-	p_window->index = 0;
-	p_window->instance = 0;
-	p_window->on_top = FALSE;
-	p_window->window_control = 0;
-	p_window->created = FALSE;
-	p_window->control_count = 0;
-	p_window->controls = (NWC_WIDGET**)malloc(sizeof(*p_window->controls) * MAX_CONTROLS);
-	p_window->controls[0] = NULL;
-	ZeroMemory(&p_window->pr, sizeof(p_window->pr));
-
-
-	return p_window;
+    if ( !fake_window ) // So we don't do it twice and leak.
+        fake_window = create_parent ( "EMPTY WINDOW" );
+    if ( !fake_control )
+        fake_control = new_control ();
+    return;
 }
 
-NWC_CHILD* child_initialize(NWC_PARENT* p_window)
+NWC_PARENT *parent_initialize ( void )
 {
-	NWC_CHILD* p_child;
+    NWC_PARENT *p_window;
+    p_window = ( NWC_PARENT * )malloc ( sizeof ( *p_window ) );
+    if ( !p_window )
+    {
+        GiveError ( "Allocation for window memory has failed.\nProgram will now exit gracefully.", TRUE );
+    }
 
-	if (!p_window)
-	{
-		GiveError("Parent of child does not exist. Cannot initialize a new child element.", FALSE);
-		return NULL;
-	}
+    p_window->name = NULL;
+    p_window->self = p_window;
+    p_window->child = NULL;
+    p_window->children = 0;
+    p_window->control_proc = NULL;
+    p_window->create_child = NULL;
+    p_window->create_widget = ( void * )nwc_widget_create_entry ( p_window );
+    p_window->destroy_child = NULL;
+    p_window->destroy_self = NULL;
+    p_window->heigth = 0;
+    p_window->width = 0;
+    p_window->index = 0;
+    p_window->instance = 0;
+    p_window->on_top = FALSE;
+    p_window->window_control = 0;
+    p_window->created = FALSE;
+    p_window->control_count = 0;
+    p_window->controls = ( NWC_WIDGET ** )malloc ( sizeof ( *p_window->controls ) * MAX_CONTROLS );
+    p_window->controls[0] = NULL;
+    ZeroMemory ( &p_window->pr, sizeof ( p_window->pr ) );
 
-	if (p_window->children > MAX_CHILDREN)
-	{
-		GiveError("Max child windows has been reached for parent window. Cannot create a new child element.", FALSE);
-		return NULL;
-	}
 
-	p_child = (NWC_CHILD*)malloc(sizeof(*p_child));
-
-	if (!p_child)
-	{
-		GiveError("Unable to allocate memory for a child element of the new window. \n\nProgram will attempt to exit gracefully.", TRUE);
-		return NULL;
-	}
-
-	p_child->name = NULL;
-	p_child->controls = (void**)malloc(sizeof(p_child->controls) * MAX_CONTROLS);
-
-	p_child->controls_attr = (NWC_CHILD_ATTR**)malloc(sizeof(p_child->controls_attr) * MAX_CONTROLS);
-	p_child->control_proc = NULL;
-	p_child->index = 0;
-	p_child->next = NULL;
-	p_child->parent = p_window;
-
-	return p_child;
+    return p_window;
 }
 
-void add_parent(NWC_PARENT* p_window)
+NWC_CHILD *child_initialize ( NWC_PARENT *p_window )
 {
-	int i;
-	NWC_PARENT** t_par;
+    NWC_CHILD *p_child;
 
-	if (!p_window)
-		return;
+    if ( !p_window )
+    {
+        GiveError ( "Parent of child does not exist. Cannot initialize a new child element.", FALSE );
+        return NULL;
+    }
 
-	if ((current_parents + 1) >= max_parents)
-	{
-		t_par = (NWC_PARENT**)malloc((max_parents + 1) * sizeof(*t_par));
+    if ( p_window->children > MAX_CHILDREN )
+    {
+        GiveError ( "Max child windows has been reached for parent window. Cannot create a new child element.", FALSE );
+        return NULL;
+    }
 
-		for (i = 0; i < max_parents; i++)
-		{
-			if (parents[i] == NULL)
-				continue;
-			t_par[i] = parents[i];
-		}
-		free(parents);
-		parents = t_par;
-		max_parents++;
-	}
+    p_child = ( NWC_CHILD * )malloc ( sizeof ( *p_child ) );
 
-	parents[current_parents] = p_window;
-	current_parents++;
+    if ( !p_child )
+    {
+        GiveError ( "Unable to allocate memory for a child element of the new window. \n\nProgram will attempt to exit gracefully.", TRUE );
+        return NULL;
+    }
+
+    p_child->name = NULL;
+    p_child->controls = ( void ** )malloc ( sizeof ( p_child->controls ) * MAX_CONTROLS );
+
+    p_child->controls_attr = ( NWC_CHILD_ATTR ** )malloc ( sizeof ( p_child->controls_attr ) * MAX_CONTROLS );
+    p_child->control_proc = NULL;
+    p_child->index = 0;
+    p_child->next = NULL;
+    p_child->parent = p_window;
+
+    return p_child;
 }
 
-void del_parent(NWC_PARENT* p_window)
+void add_parent ( NWC_PARENT *p_window )
 {
-	int i;
+    int i;
+    NWC_PARENT **t_par;
 
-	if (!p_window)
-		return;
+    if ( !p_window )
+        return;
 
-	for (i = 0; i < max_parents; i++)
-	{
-		if (parents[i] == p_window)
-		{
-			parents[i] = NULL;
-		}
-	}
+    if ( (current_parents + 1) >= max_parents )
+    {
+        t_par = ( NWC_PARENT ** )malloc ( (max_parents + 1) * sizeof ( *t_par ) );
+
+        for ( i = 0; i < max_parents; i++ )
+        {
+            if ( parents[i] == NULL )
+                continue;
+            t_par[i] = parents[i];
+        }
+        free ( parents );
+        parents = t_par;
+        max_parents++;
+    }
+
+    parents[current_parents] = p_window;
+    current_parents++;
 }
 
-NWC_PARENT* create_parent(char* name)
+void del_parent ( NWC_PARENT *p_window )
 {
-	NWC_PARENT* p_window = NULL;
-	int i;
+    int i;
 
-	if (!name || name[0] == '\0')
-	{
-		GiveError("Window was attempted to be created without proper naming convention. Exiting program.", TRUE);
-		return NULL;
-	}
+    if ( !p_window )
+        return;
 
-	if (INITIALIZED == FALSE)
-	{
-		initialize_windows();
-	}
-
-	if (!p_window)
-	{
-		p_window = parent_initialize();
-		if (p_window == NULL)
-		{
-			GiveError("Allocation for window memory has failed.\nProgram will attempt to exit gracefully.", TRUE);
-		}
-	}
-
-	p_window->name = str_dup(name);
-	p_window->index = IDX;
-	p_window->controls = (NWC_CTRL**)malloc(20 * sizeof(NWC_CTRL*)); // Start with a max of 10 controls. This is dynamic!
-	p_window->max_controls = 10;
-	for (i = 0; i < p_window->max_controls; i++)
-	{
-		p_window->controls[i] = NULL;
-	}
-	IDX++;
-	add_parent(p_window);
-	return p_window;
+    for ( i = 0; i < max_parents; i++ )
+    {
+        if ( parents[i] == p_window )
+        {
+            parents[i] = NULL;
+        }
+    }
 }
 
-BOOL set_parent_config(NWC_PARENT* p_window, HWND hwnd, LRESULT* proc, int x, int y, int width, int heigth, HINSTANCE instance, BOOL on_top, unsigned long int window_options, unsigned long int style_options)
+NWC_PARENT *create_parent ( char *name )
 {
-	// This is a dynamic function; half fill options will skip gracefully and cause those to remain as they were.
+    NWC_PARENT *p_window = NULL;
+    int i;
 
-	if (!p_window)
-	{
-		GiveError("Window not found.", FALSE);
-		return FALSE;
-	}
+    if ( !name || name[0] == '\0' )
+    {
+        GiveError ( "Window was attempted to be created without proper naming convention. Exiting program.", TRUE );
+        return NULL;
+    }
 
-	if (hwnd != 0)
-		p_window->window_control = hwnd;
-	else
-	{
-		p_window->window_control = 0;
-	}
+    if ( INITIALIZED == FALSE )
+    {
+        initialize_windows ();
+    }
 
-	if (proc)
-		p_window->control_proc = proc;
-	else
-		p_window->control_proc = (LRESULT*)NWCDefaultProc;
+    if ( !p_window )
+    {
+        p_window = parent_initialize ();
+        if ( p_window == NULL )
+        {
+            GiveError ( "Allocation for window memory has failed.\nProgram will attempt to exit gracefully.", TRUE );
+        }
+    }
 
-	if (width > -1)
-		p_window->width = width;
-	if (heigth > -1)
-		p_window->heigth = heigth;
-	p_window->instance = instance;
-
-	if (on_top == TRUE || on_top == FALSE)
-		p_window->on_top = on_top;
-
-	p_window->window_options = window_options | WS_EX_CLIENTEDGE;
-	p_window->style_options = style_options | WS_CAPTION | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_SYSMENU | DS_SETFONT;
-	p_window->x = x == CW_USEDEFAULT ? CW_USEDEFAULT : x < 0 ? 0 : x;
-	p_window->y = y == CW_USEDEFAULT ? CW_USEDEFAULT : y < 0 ? 0 : y;
-
-	if (p_window->window_control == 0)
-	{
-		show_parent(p_window);
-		ShowWindow(p_window->window_pointer, SW_HIDE);
-	}
-
-	return TRUE;
+    p_window->name = str_dup ( name );
+    p_window->index = IDX;
+    p_window->controls = ( NWC_CTRL ** )malloc ( 20 * sizeof ( NWC_CTRL * ) ); // Start with a max of 10 controls. This is dynamic!
+    p_window->max_controls = 10;
+    for ( i = 0; i < p_window->max_controls; i++ )
+    {
+        p_window->controls[i] = NULL;
+    }
+    IDX++;
+    add_parent ( p_window );
+    return p_window;
 }
 
-BOOL show_parent(NWC_PARENT* p_window)
+BOOL set_parent_config ( NWC_PARENT *p_window, HWND hwnd, LRESULT *proc, int x, int y, int width, int heigth, HINSTANCE instance, BOOL on_top, unsigned long int window_options, unsigned long int style_options )
 {
-	WNDCLASS wc;
-	int i;
+    // This is a dynamic function; half fill options will skip gracefully and cause those to remain as they were.
 
-	if (!p_window)
-	{
-		GiveError("Window will not be shown; window has not been created nor initialized.", FALSE);
-		return FALSE;
-	}
-	if (p_window->created == FALSE) // Create the window
-	{
-		wc.cbClsExtra = 0;
-		wc.cbWndExtra = 0;
-		wc.hbrBackground = (HBRUSH)(COLOR_WINDOW);
-		wc.lpfnWndProc = (WNDPROC)p_window->control_proc;
-		wc.lpszClassName =(LPCSTR) p_window->name;
-		wc.lpszMenuName = NULL;
-		wc.hInstance = p_window->instance;
-		wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-		wc.style = CS_DBLCLKS;
-		RegisterClass(&wc);
+    if ( !p_window )
+    {
+        GiveError ( "Window not found.", FALSE );
+        return FALSE;
+    }
 
-		p_window->window_pointer = CreateWindowEx((DWORD)p_window->window_options, (LPCSTR)p_window->name, (LPCSTR)p_window->name, (DWORD)p_window->style_options, p_window->x, p_window->y, p_window->width, p_window->heigth, p_window->window_control, 0, p_window->instance, 0);
+    if ( hwnd != 0 )
+        p_window->window_control = hwnd;
+    else
+    {
+        p_window->window_control = 0;
+    }
 
-		if (p_window->window_control == 0)
-			p_window->window_control = p_window->window_pointer;
+    if ( proc )
+        p_window->control_proc = proc;
+    else
+        p_window->control_proc = ( LRESULT * )NWCDefaultProc;
 
-		if (p_window->window_control == NULL)
-		{
-			p_window->window_control = p_window->window_pointer;
-		}
+    if ( width > -1 )
+        p_window->width = width;
+    if ( heigth > -1 )
+        p_window->heigth = heigth;
+    p_window->instance = instance;
 
-		p_window->created = TRUE;
+    if ( on_top == TRUE || on_top == FALSE )
+        p_window->on_top = on_top;
 
-		//		ShowWindow(p_window->window_pointer,SW_SHOW);
-	}
+    p_window->window_options = window_options | WS_EX_CLIENTEDGE;
+    p_window->style_options = style_options | WS_CAPTION | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_SYSMENU | DS_SETFONT;
+    p_window->x = x == CW_USEDEFAULT ? CW_USEDEFAULT : x < 0 ? 0 : x;
+    p_window->y = y == CW_USEDEFAULT ? CW_USEDEFAULT : y < 0 ? 0 : y;
 
-	{
-		ShowWindow(p_window->window_pointer, SW_SHOW);
+    if ( p_window->window_control == 0 )
+    {
+        show_parent ( p_window );
+        ShowWindow ( p_window->window_pointer, SW_HIDE );
+    }
 
-		if (p_window->control_count > 0)
-		{
-			for (i = 0; i < p_window->max_controls; i++)
-			{
-				if (p_window->controls[i] != NULL)
-				{
-					ShowWindow(p_window->controls[i]->handle, SW_SHOW);
-				}
-			}
-		}
-
-		//	NWCDefaultProc(p_window->window_pointer, WM_CREATE,0,0);
-	}
-
-	p_window->window_control = p_window->window_pointer;
-	return TRUE;
+    return TRUE;
 }
 
-NWC_CHILD* create_child(NWC_PARENT* p_window, char* name)
+BOOL show_parent ( NWC_PARENT *p_window )
 {
-	NWC_CHILD* p_child;
+    WNDCLASS wc;
+    int i;
 
-	if (!p_window)
-	{
-		GiveError("Create_child () attempted to add a child for a non-existance, managed, window. Attempting to exit gracefully.", TRUE);
-		return NULL;
-	}
+    if ( !p_window )
+    {
+        GiveError ( "Window will not be shown; window has not been created nor initialized.", FALSE );
+        return FALSE;
+    }
+    if ( p_window->created == FALSE ) // Create the window
+    {
+        wc.cbClsExtra = 0;
+        wc.cbWndExtra = 0;
+        wc.hbrBackground = ( HBRUSH )(COLOR_WINDOW);
+        wc.lpfnWndProc = ( WNDPROC )p_window->control_proc;
+        wc.lpszClassName = ( LPCSTR )p_window->name;
+        wc.lpszMenuName = NULL;
+        wc.hInstance = p_window->instance;
+        wc.hIcon = LoadIcon ( NULL, IDI_APPLICATION );
+        wc.hCursor = LoadCursor ( NULL, IDC_ARROW );
+        wc.style = CS_DBLCLKS;
+        RegisterClass ( &wc );
 
-	if (!name || name[0] == '\0')
-	{
-		GiveError("Name of child for creation is null or not a valid name.\nCannot create child.", FALSE);
-		return NULL;
-	}
+        p_window->window_pointer = CreateWindowEx ( ( DWORD )p_window->window_options, ( LPCSTR )p_window->name, ( LPCSTR )p_window->name, ( DWORD )p_window->style_options, p_window->x, p_window->y, p_window->width, p_window->heigth, p_window->window_control, 0, p_window->instance, 0 );
 
-	p_child = child_initialize(p_window);
+        if ( p_window->window_control == 0 )
+            p_window->window_control = p_window->window_pointer;
 
-	if (!p_child)
-	{
-		GiveError("A problem has occured creating a child window.", FALSE);
-		return NULL;
-	}
+        if ( p_window->window_control == NULL )
+        {
+            p_window->window_control = p_window->window_pointer;
+        }
 
-	p_child->index = p_window->children;
-	p_child->control_proc = p_window->control_proc; // Unless changed, the parent will control the child. This will rarely change.
-	p_window->children++;
+        p_window->created = TRUE;
 
-	return p_child;
+        //		ShowWindow(p_window->window_pointer,SW_SHOW);
+    }
+
+    {
+        ShowWindow ( p_window->window_pointer, SW_SHOW );
+
+        if ( p_window->control_count > 0 )
+        {
+            for ( i = 0; i < p_window->max_controls; i++ )
+            {
+                if ( p_window->controls[i] != NULL )
+                {
+                    ShowWindow ( p_window->controls[i]->handle, SW_SHOW );
+                }
+            }
+        }
+
+        //	NWCDefaultProc(p_window->window_pointer, WM_CREATE,0,0);
+    }
+
+    p_window->window_control = p_window->window_pointer;
+    return TRUE;
 }
 
-LRESULT CALLBACK NWCDefaultProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+NWC_CHILD *create_child ( NWC_PARENT *p_window, char *name )
 {
-	int i;
-	int j;
+    NWC_CHILD *p_child;
 
-	for (i = 0; i < max_parents; i++)
-	{
-		if (parents[i] != NULL)
-		{
-			for (j = 0; j <= parents[i]->max_controls; j++)
-			{
-				//				if (parents[i]->controls[j] == NULL)
-					//				continue;
-						//		if ((parents[i]->controls[j]) && parents[i]->controls[j]->handle == hwnd)
-							//	{
-								//	LOG("Control: %s called", parents[i]->controls[j]->name);
-								//}
-			}
-		}
-	}
+    if ( !p_window )
+    {
+        GiveError ( "Create_child () attempted to add a child for a non-existance, managed, window. Attempting to exit gracefully.", TRUE );
+        return NULL;
+    }
 
-	switch (message)
-	{
-	default:
-	{
-		return DefWindowProc(hwnd, message, wParam, lParam);
-	}
-	}
+    if ( !name || name[0] == '\0' )
+    {
+        GiveError ( "Name of child for creation is null or not a valid name.\nCannot create child.", FALSE );
+        return NULL;
+    }
 
-	return 0;
+    p_child = child_initialize ( p_window );
+
+    if ( !p_child )
+    {
+        GiveError ( "A problem has occured creating a child window.", FALSE );
+        return NULL;
+    }
+
+    p_child->index = p_window->children;
+    p_child->control_proc = p_window->control_proc; // Unless changed, the parent will control the child. This will rarely change.
+    p_window->children++;
+
+    return p_child;
 }
 
-void add_control_parent(NWC_PARENT* p_window, NWC_CTRL* ctrl)
+LRESULT CALLBACK NWCDefaultProc ( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-	NWC_CTRL** t_ctrl;
-	int i;
+    int i;
+    int j;
 
-	if (!p_window || !ctrl)
-	{
-		GiveError("Adding control to parent resulted in a bad call.", FALSE);
-		return;
-	}
+    for ( i = 0; i < max_parents; i++ )
+    {
+        if ( parents[i] != NULL )
+        {
+            for ( j = 0; j <= parents[i]->max_controls; j++ )
+            {
+                //				if (parents[i]->controls[j] == NULL)
+                    //				continue;
+                        //		if ((parents[i]->controls[j]) && parents[i]->controls[j]->handle == hwnd)
+                            //	{
+                                //	LOG("Control: %s called", parents[i]->controls[j]->name);
+                                //}
+            }
+        }
+    }
 
-	if ((p_window->control_count) >= p_window->max_controls)
-	{
-		// Increase the control count.
-		t_ctrl = (NWC_CTRL**)malloc((p_window->max_controls + 1) * sizeof(*p_window->controls));
+    switch ( message )
+    {
+        default:
+        {
+            return DefWindowProc ( hwnd, message, wParam, lParam );
+        }
+    }
 
-		for (i = 0; i < p_window->max_controls; i++)
-		{
-			if (p_window->controls[i] == NULL)
-				continue;
-			t_ctrl[i] = p_window->controls[i];
-		}
-		free(p_window->controls);
-		p_window->controls = t_ctrl;
-		p_window->max_controls++;
-	}
-
-	p_window->controls[p_window->control_count] = ctrl;
-	p_window->control_count++;
+    return 0;
 }
 
-void delete_control_parent(NWC_PARENT* p_window, NWC_CTRL* ctrl)
+void add_control_parent ( NWC_PARENT *p_window, NWC_CTRL *ctrl )
 {
-	int i;
+    NWC_CTRL **t_ctrl;
+    int i;
 
-	if (!p_window || !ctrl)
-	{
-		GiveError("Attempted to delete a control that does not exist.", FALSE);
-		return;
-	}
+    if ( !p_window || !ctrl )
+    {
+        GiveError ( "Adding control to parent resulted in a bad call.", FALSE );
+        return;
+    }
 
-	for (i = 0; i < p_window->max_controls; i++)
-	{
-		if (p_window->controls[i] == ctrl)
-		{
-			free(ctrl->name);
-			free(ctrl);
-		}
-	}
+    if ( (p_window->control_count) >= p_window->max_controls )
+    {
+        // Increase the control count.
+        t_ctrl = ( NWC_CTRL ** )malloc ( (p_window->max_controls + 1) * sizeof ( *p_window->controls ) );
+
+        for ( i = 0; i < p_window->max_controls; i++ )
+        {
+            if ( p_window->controls[i] == NULL )
+                continue;
+            t_ctrl[i] = p_window->controls[i];
+        }
+        free ( p_window->controls );
+        p_window->controls = t_ctrl;
+        p_window->max_controls++;
+    }
+
+    p_window->controls[p_window->control_count] = ctrl;
+    p_window->control_count++;
 }
 
-NWC_CTRL* new_control(void)
+void delete_control_parent ( NWC_PARENT *p_window, NWC_CTRL *ctrl )
 {
-	NWC_CTRL* ctrl;
+    int i;
 
-	ctrl = (NWC_CTRL*)malloc(sizeof(*ctrl));
+    if ( !p_window || !ctrl )
+    {
+        GiveError ( "Attempted to delete a control that does not exist.", FALSE );
+        return;
+    }
 
-	ctrl->name = NULL;
-	ctrl->handle = 0;
-	ctrl->height = 0;
-	ctrl->parent = 0;
-	ctrl->style = 0;
-	ctrl->type = 0;
-	ctrl->width = 0;
-	ctrl->x = 0;
-	ctrl->y = 0;
-
-	return ctrl;
+    for ( i = 0; i < p_window->max_controls; i++ )
+    {
+        if ( p_window->controls[i] == ctrl )
+        {
+            free ( ctrl->name );
+            free ( ctrl );
+        }
+    }
 }
 
-void CTRL_Resize(NWC_PARENT* p_window, char* name, int x, int y, int width, int height)
+NWC_CTRL *new_control ( void )
 {
-	int i;
+    NWC_CTRL *ctrl;
 
-	if (!p_window || !name)
-		return;
+    ctrl = ( NWC_CTRL * )malloc ( sizeof ( *ctrl ) );
 
-	for (i = 0; i < p_window->max_controls; i++)
-	{
-		if (p_window->controls[i] == NULL)
-			continue;
-		if (strstr(p_window->controls[i]->name, name))
-		{
-			MoveWindow(p_window->controls[i]->handle, x, y, width, height, TRUE);
-		}
-	}
+    ctrl->name = NULL;
+    ctrl->handle = 0;
+    ctrl->height = 0;
+    ctrl->parent = 0;
+    ctrl->style = 0;
+    ctrl->type = 0;
+    ctrl->width = 0;
+    ctrl->x = 0;
+    ctrl->y = 0;
+
+    return ctrl;
 }
 
-NWC_CTRL* get_control(NWC_PARENT* p_window, char* name)
+void CTRL_Resize ( NWC_PARENT *p_window, char *name, int x, int y, int width, int height )
 {
-	int i;
+    int i;
 
-	if (!p_window || !name)
-		return fake_control;
-	for (i = 0; i < p_window->max_controls; i++)
-	{
-		if (p_window->controls[i] == NULL)
-			continue;
-		if (strstr(p_window->controls[i]->name, name))
-		{
-			return p_window->controls[i];
-		}
-	}
-	return fake_control; // Return Fake Window instead of null.
+    if ( !p_window || !name )
+        return;
+
+    for ( i = 0; i < p_window->max_controls; i++ )
+    {
+        if ( p_window->controls[i] == NULL )
+            continue;
+        if ( strstr ( p_window->controls[i]->name, name ) )
+        {
+            MoveWindow ( p_window->controls[i]->handle, x, y, width, height, TRUE );
+        }
+    }
+}
+
+NWC_CTRL *get_control ( NWC_PARENT *p_window, char *name )
+{
+    int i;
+
+    if ( !p_window || !name )
+        return fake_control;
+    for ( i = 0; i < p_window->max_controls; i++ )
+    {
+        if ( p_window->controls[i] == NULL )
+            continue;
+        if ( strstr ( p_window->controls[i]->name, name ) )
+        {
+            return p_window->controls[i];
+        }
+    }
+    return fake_control; // Return Fake Window instead of null.
 }
 
 /* Same as get_control above, but searches by ID rather than name.
  * This is so we can search for thingd we didn't give names to for
  * aesthetic reasons. */
-NWC_CTRL* get_control_by_id(NWC_PARENT* p_window, DWORD id)
+NWC_CTRL *get_control_by_id ( NWC_PARENT *p_window, DWORD id )
 {
-	int i;
+    int i;
 
-	if (!p_window)
-		return fake_control;
-	for (i = 0; i < p_window->max_controls; i++)
-	{
-		if (p_window->controls[i] == NULL)
-			continue;
-		if (p_window->controls[i]->id == id)
-		{
-			return p_window->controls[i];
-		}
-	}
-	return fake_control; // Return Fake Window instead of null.
+    if ( !p_window )
+        return fake_control;
+    for ( i = 0; i < p_window->max_controls; i++ )
+    {
+        if ( p_window->controls[i] == NULL )
+            continue;
+        if ( p_window->controls[i]->id == id )
+        {
+            return p_window->controls[i];
+        }
+    }
+    return fake_control; // Return Fake Window instead of null.
 }
-BOOL parent_has_focus(NWC_PARENT* p_window)
+BOOL parent_has_focus ( NWC_PARENT *p_window )
 {
-	int i;
-	if (!p_window)
-		return FALSE;
+    int i;
+    if ( !p_window )
+        return FALSE;
 
-	if (!p_window->controls)
-		return FALSE;
+    if ( !p_window->controls )
+        return FALSE;
 
-	if (GetFocus() == p_window->window_control)
-		return TRUE;
-	for (i = 0; i < p_window->max_controls; i++)
-	{
-		if (p_window->controls[i] == NULL)
-			continue;
-		if (GetFocus() == p_window->controls[i]->handle)
-			return TRUE;
-	}
-	return FALSE;
-}
-
-BOOL program_has_focus(void)
-{
-	int i;
-	int x;
-
-	for (i = 0; i < max_parents; i++)
-	{
-		if (parents[i] == NULL)
-			continue;
-		if (GetFocus() == parents[i]->window_control)
-			return TRUE;
-		for (x = 0; x < parents[i]->max_controls; x++)
-		{
-			if (parents[i]->controls[x] == NULL)
-				continue;
-			if (GetFocus() == parents[i]->controls[x]->handle)
-				return TRUE;
-		}
-	}
-
-	return FALSE;
+    if ( GetFocus () == p_window->window_control )
+        return TRUE;
+    for ( i = 0; i < p_window->max_controls; i++ )
+    {
+        if ( p_window->controls[i] == NULL )
+            continue;
+        if ( GetFocus () == p_window->controls[i]->handle )
+            return TRUE;
+    }
+    return FALSE;
 }
 
-BOOL AddButton_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show)
+BOOL program_has_focus ( void )
 {
-	NWC_CTRL* ctrl;
+    int i;
+    int x;
 
-	if (!p_window)
-	{
-		GiveError("AddButton_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE);
-		return FALSE;
-	}
+    for ( i = 0; i < max_parents; i++ )
+    {
+        if ( parents[i] == NULL )
+            continue;
+        if ( GetFocus () == parents[i]->window_control )
+            return TRUE;
+        for ( x = 0; x < parents[i]->max_controls; x++ )
+        {
+            if ( parents[i]->controls[x] == NULL )
+                continue;
+            if ( GetFocus () == parents[i]->controls[x]->handle )
+                return TRUE;
+        }
+    }
 
-	if (!name || name[0] == '\0')
-	{
-		GiveError("Name of parent-button does not exist. Using a generic name.", FALSE);
-		name = str_dup("Button");
-	}
-
-	if (handle < 0)
-	{
-		GiveError("Handle range is too small to create parent-button", FALSE);
-		return FALSE;
-	}
-
-	ctrl = new_control();
-
-	if (!ctrl)
-	{
-		GiveError("Control failed to create properly. Exiting gracefully.", TRUE);
-		return FALSE;
-	}
-
-	ctrl->name = str_dup(name);
-	ctrl->x = x;
-	ctrl->y = y;
-	ctrl->width = width;
-	ctrl->height = height;
-	ctrl->style |= style | BS_TEXT | WS_CHILD | WS_TABSTOP;
-	ctrl->handle = handle;
-	ctrl->parent = p_window;
-	ctrl->type = BUTTON;
-	ctrl->id = id;
-	add_control_parent(p_window, ctrl);
-
-	if (p_window->window_pointer == NULL)
-	{
-		show_parent(p_window);
-	}
-
-	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, WC_BUTTON, (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR )ctrl->id, g_hInst, 0);
-	CTRL_ChangeFont(p_window, ctrl->name, "Courier New");
-	ShowWindow(ctrl->handle, SW_SHOW);
-	return TRUE;
+    return FALSE;
 }
 
-void CTRL_SetText(NWC_PARENT* p_window, char* ctrl, char* text, ...)
+BOOL AddButton_Parent ( NWC_PARENT *p_window, char *name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show )
 {
-	char buf[20000];
+    NWC_CTRL *ctrl;
 
-	int i;
+    if ( !p_window )
+    {
+        GiveError ( "AddButton_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE );
+        return FALSE;
+    }
 
-	va_list args;
-	va_start(args, text);
-	vsprintf(buf, text, args);
-	va_end(args);
+    if ( !name || name[0] == '\0' )
+    {
+        GiveError ( "Name of parent-button does not exist. Using a generic name.", FALSE );
+        name = str_dup ( "Button" );
+    }
 
-	if (!ctrl || ctrl[0] == '\0')
-	{
-		GiveError("Cannot change name of control without a name.", 0);
-		return;
-	}
+    if ( handle < 0 )
+    {
+        GiveError ( "Handle range is too small to create parent-button", FALSE );
+        return FALSE;
+    }
 
-	if (!p_window)
-		return;
+    ctrl = new_control ();
 
-	for (i = 0; i < p_window->max_controls; i++)
-	{
-		if (p_window->controls[i] == NULL)
-			continue;
-		if (p_window->controls[i]->name == NULL)
-			continue;
+    if ( !ctrl )
+    {
+        GiveError ( "Control failed to create properly. Exiting gracefully.", TRUE );
+        return FALSE;
+    }
 
-		if (strstr(p_window->controls[i]->name, ctrl))
-		{
-			SendMessage(p_window->controls[i]->handle, WM_SETTEXT, strlen(buf), (LPARAM)(LPCSTR)buf);
+    ctrl->name = str_dup ( name );
+    ctrl->x = x;
+    ctrl->y = y;
+    ctrl->width = width;
+    ctrl->height = height;
+    ctrl->style |= style | BS_TEXT | WS_CHILD | WS_TABSTOP;
+    ctrl->handle = handle;
+    ctrl->parent = p_window;
+    ctrl->type = BUTTON;
+    ctrl->id = id;
+    add_control_parent ( p_window, ctrl );
 
-			return;
-		}
-	}
+    if ( p_window->window_pointer == NULL )
+    {
+        show_parent ( p_window );
+    }
+
+    ctrl->handle = CreateWindowEx ( WS_EX_CLIENTEDGE, WC_BUTTON, ( LPCSTR )ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU )( UINT_PTR )ctrl->id, g_hInst, 0 );
+    CTRL_ChangeFont ( p_window, ctrl->name, "Courier New" );
+    ShowWindow ( ctrl->handle, SW_SHOW );
+    return TRUE;
 }
 
-BOOL AddStatic_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show)
+void CTRL_SetText ( NWC_PARENT *p_window, char *ctrl, char *text, ... )
 {
-	NWC_CTRL* ctrl;
+    char buf[20000];
 
-	if (!p_window)
-	{
-		GiveError("AddStatic_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE);
-		return FALSE;
-	}
+    int i;
 
-	if (!name || name[0] == '\0')
-	{
-		GiveError("Name of parent-static does not exist. Using a generic name.", FALSE);
-		name = str_dup("Static");
-	}
+    va_list args;
+    va_start ( args, text );
+    vsprintf ( buf, text, args );
+    va_end ( args );
 
-	if (handle < 0)
-	{
-		GiveError("Handle range is too small to create parent-static", FALSE);
-		return FALSE;
-	}
+    if ( !ctrl || ctrl[0] == '\0' )
+    {
+        GiveError ( "Cannot change name of control without a name.", 0 );
+        return;
+    }
 
-	ctrl = new_control();
+    if ( !p_window )
+        return;
 
-	if (!ctrl)
-	{
-		GiveError("Control failed to create properly. Exiting gracefully.", TRUE);
-		return FALSE;
-	}
+    for ( i = 0; i < p_window->max_controls; i++ )
+    {
+        if ( p_window->controls[i] == NULL )
+            continue;
+        if ( p_window->controls[i]->name == NULL )
+            continue;
 
-	ctrl->name = str_dup(name);
-	ctrl->x = x;
-	ctrl->y = y;
-	ctrl->width = width;
-	ctrl->height = height;
-	ctrl->style |= style | WS_CHILD;
-	ctrl->handle = handle;
-	ctrl->parent = p_window;
-	ctrl->type = STATIC;
-	ctrl->id = id;
-	add_control_parent(p_window, ctrl);
+        if ( strstr ( p_window->controls[i]->name, ctrl ) )
+        {
+            SendMessage ( p_window->controls[i]->handle, WM_SETTEXT, strlen ( buf ), ( LPARAM )( LPCSTR )buf );
 
-	if (p_window->window_pointer == NULL)
-	{
-		show_parent(p_window);
-	}
-
-	ctrl->handle = CreateWindowEx(WS_EX_WINDOWEDGE, (LPCSTR)"STATIC", (LPCSTR)ctrl->name, ctrl->style | WS_CHILD, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
-	CTRL_ChangeFont(p_window, ctrl->name, "Courier New");
-	ShowWindow(ctrl->handle, SW_SHOW);
-	return TRUE;
+            return;
+        }
+    }
 }
 
-BOOL AddCheck_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show)
+BOOL AddStatic_Parent ( NWC_PARENT *p_window, char *name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show )
 {
-	NWC_CTRL* ctrl;
+    NWC_CTRL *ctrl;
 
-	if (!p_window)
-	{
-		GiveError("AddCheck_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !p_window )
+    {
+        GiveError ( "AddStatic_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE );
+        return FALSE;
+    }
 
-	if (!name || name[0] == '\0')
-	{
-		GiveError("Name of parent-Check does not exist. Using a generic name.", FALSE);
-		name = str_dup("Checkbox");
-	}
+    if ( !name || name[0] == '\0' )
+    {
+        GiveError ( "Name of parent-static does not exist. Using a generic name.", FALSE );
+        name = str_dup ( "Static" );
+    }
 
-	if (handle < 0)
-	{
-		GiveError("Handle range is too small to create parent-Check", FALSE);
-		return FALSE;
-	}
+    if ( handle < 0 )
+    {
+        GiveError ( "Handle range is too small to create parent-static", FALSE );
+        return FALSE;
+    }
 
-	ctrl = new_control();
+    ctrl = new_control ();
 
-	if (!ctrl)
-	{
-		GiveError("Control failed to create properly. Exiting gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !ctrl )
+    {
+        GiveError ( "Control failed to create properly. Exiting gracefully.", TRUE );
+        return FALSE;
+    }
 
-	ctrl->name = str_dup(name);
-	ctrl->x = x;
-	ctrl->y = y;
-	ctrl->width = width;
-	ctrl->height = height;
-	ctrl->style |= style | WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX | WS_TABSTOP;
-	ctrl->handle = handle;
-	ctrl->parent = p_window;
-	ctrl->type = CHECKBOX;
-	ctrl->id = id;
-	add_control_parent(p_window, ctrl);
+    ctrl->name = str_dup ( name );
+    ctrl->x = x;
+    ctrl->y = y;
+    ctrl->width = width;
+    ctrl->height = height;
+    ctrl->style |= style | WS_CHILD;
+    ctrl->handle = handle;
+    ctrl->parent = p_window;
+    ctrl->type = STATIC;
+    ctrl->id = id;
+    add_control_parent ( p_window, ctrl );
 
-	if (p_window->window_pointer == NULL)
-	{
-		show_parent(p_window);
-	}
+    if ( p_window->window_pointer == NULL )
+    {
+        show_parent ( p_window );
+    }
 
-	ctrl->handle = CreateWindowEx(WS_EX_WINDOWEDGE, (LPCSTR)"BUTTON", (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
-	CTRL_ChangeFont(p_window, ctrl->name, "Courier New");
-
-	ShowWindow(ctrl->handle, SW_SHOW);
-	return TRUE;
+    ctrl->handle = CreateWindowEx ( WS_EX_WINDOWEDGE, ( LPCSTR )"STATIC", ( LPCSTR )ctrl->name, ctrl->style | WS_CHILD, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU )( UINT_PTR )ctrl->id, g_hInst, 0 );
+    CTRL_ChangeFont ( p_window, ctrl->name, "Courier New" );
+    ShowWindow ( ctrl->handle, SW_SHOW );
+    return TRUE;
 }
 
-BOOL check_get_status(NWC_PARENT* p_window, char* name)
+BOOL AddCheck_Parent ( NWC_PARENT *p_window, char *name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show )
 {
-	NWC_CTRL* ctrl;
+    NWC_CTRL *ctrl;
 
-	if (!p_window)
-	{
-		GiveError("check_get_status () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !p_window )
+    {
+        GiveError ( "AddCheck_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE );
+        return FALSE;
+    }
 
-	if (!name || name[0] == '\0')
-	{
-		GiveError("Check not found.", 0);
-		return FALSE;
-	}
+    if ( !name || name[0] == '\0' )
+    {
+        GiveError ( "Name of parent-Check does not exist. Using a generic name.", FALSE );
+        name = str_dup ( "Checkbox" );
+    }
 
-	ctrl = get_control(p_window, name);
+    if ( handle < 0 )
+    {
+        GiveError ( "Handle range is too small to create parent-Check", FALSE );
+        return FALSE;
+    }
 
-	if (!ctrl)
-	{
-		GiveError("Control failed to find properly. Exiting gracefully.", TRUE);
-		return FALSE;
-	}
+    ctrl = new_control ();
 
-	if (SendDlgItemMessage(p_window->window_control, ctrl->id, BM_GETCHECK, 0, 0))
-		return TRUE;
-	else
-		return FALSE;
+    if ( !ctrl )
+    {
+        GiveError ( "Control failed to create properly. Exiting gracefully.", TRUE );
+        return FALSE;
+    }
+
+    ctrl->name = str_dup ( name );
+    ctrl->x = x;
+    ctrl->y = y;
+    ctrl->width = width;
+    ctrl->height = height;
+    ctrl->style |= style | WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX | WS_TABSTOP;
+    ctrl->handle = handle;
+    ctrl->parent = p_window;
+    ctrl->type = CHECKBOX;
+    ctrl->id = id;
+    add_control_parent ( p_window, ctrl );
+
+    if ( p_window->window_pointer == NULL )
+    {
+        show_parent ( p_window );
+    }
+
+    ctrl->handle = CreateWindowEx ( WS_EX_WINDOWEDGE, ( LPCSTR )"BUTTON", ( LPCSTR )ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU )( UINT_PTR )ctrl->id, g_hInst, 0 );
+    CTRL_ChangeFont ( p_window, ctrl->name, "Courier New" );
+
+    ShowWindow ( ctrl->handle, SW_SHOW );
+    return TRUE;
 }
 
-BOOL check_set(NWC_PARENT* p_window, char* name)
+BOOL check_get_status ( NWC_PARENT *p_window, char *name )
 {
-	NWC_CTRL* ctrl;
+    NWC_CTRL *ctrl;
 
-	if (!p_window)
-	{
-		GiveError("check_get_status () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !p_window )
+    {
+        GiveError ( "check_get_status () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE );
+        return FALSE;
+    }
 
-	if (!name || name[0] == '\0')
-	{
-		GiveError("Check not found.", 0);
-		return FALSE;
-	}
+    if ( !name || name[0] == '\0' )
+    {
+        GiveError ( "Check not found.", 0 );
+        return FALSE;
+    }
 
-	ctrl = get_control(p_window, name);
+    ctrl = get_control ( p_window, name );
 
-	if (!ctrl)
-	{
-		GiveError("Control failed to find properly. Exiting gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !ctrl )
+    {
+        GiveError ( "Control failed to find properly. Exiting gracefully.", TRUE );
+        return FALSE;
+    }
 
-	if (SendDlgItemMessage(p_window->window_control, ctrl->id, BM_SETCHECK, BST_CHECKED, 0))
-		return TRUE;
-	else
-		return FALSE;
+    if ( SendDlgItemMessage ( p_window->window_control, ctrl->id, BM_GETCHECK, 0, 0 ) )
+        return TRUE;
+    else
+        return FALSE;
 }
 
-BOOL AddRadio_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show)
+BOOL check_set ( NWC_PARENT *p_window, char *name )
 {
-	NWC_CTRL* ctrl;   
+    NWC_CTRL *ctrl;
 
-	if (!p_window)
-	{
-		GiveError("AddRadio_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !p_window )
+    {
+        GiveError ( "check_get_status () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE );
+        return FALSE;
+    }
 
-	if (!name || name[0] == '\0')
-	{
-		GiveError("Name of parent-Radio does not exist. Using a generic name.", FALSE);
-		name = str_dup("Radio");
-	}
+    if ( !name || name[0] == '\0' )
+    {
+        GiveError ( "Check not found.", 0 );
+        return FALSE;
+    }
 
-	if (handle < 0)
-	{
-		GiveError("Handle range is too small to create parent-radio", FALSE);
-		return FALSE;
-	}
+    ctrl = get_control ( p_window, name );
 
-	ctrl = new_control();
+    if ( !ctrl )
+    {
+        GiveError ( "Control failed to find properly. Exiting gracefully.", TRUE );
+        return FALSE;
+    }
 
-	if (!ctrl)
-	{
-		GiveError("Control failed to create properly. Exiting gracefully.", TRUE);
-		return FALSE;
-	}
-
-	ctrl->name = str_dup(name);
-	ctrl->x = x;
-	ctrl->y = y;   
-	ctrl->width = width;
-	ctrl->height = height;
-	ctrl->style |= style | WS_VISIBLE | WS_CHILD | BS_AUTORADIOBUTTON | WS_TABSTOP;
-	ctrl->handle = handle;
-	ctrl->parent = p_window;
-	ctrl->type = RADIO;
-	ctrl->id = id;
-	add_control_parent(p_window, ctrl);
-
-	if (p_window->window_pointer == NULL)
-	{
-		show_parent(p_window);
-	}
-
-	ctrl->handle = CreateWindowEx(WS_EX_WINDOWEDGE, (LPCSTR)"BUTTON", (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
-	ShowWindow(ctrl->handle, SW_SHOW);
-	return TRUE;
+    if ( SendDlgItemMessage ( p_window->window_control, ctrl->id, BM_SETCHECK, BST_CHECKED, 0 ) )
+        return TRUE;
+    else
+        return FALSE;
 }
 
-BOOL AddCombo_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show)
+BOOL AddRadio_Parent ( NWC_PARENT *p_window, char *name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show )
 {
-	NWC_CTRL* ctrl;
+    NWC_CTRL *ctrl;
 
-	if (!p_window)
-	{
-		GiveError("AddRadio_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !p_window )
+    {
+        GiveError ( "AddRadio_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE );
+        return FALSE;
+    }
 
-	if (!name || name[0] == '\0')
-	{
-		GiveError("Name of parent-Radio does not exist. Using a generic name.", FALSE);
-		name = str_dup("Radio");
-	}
+    if ( !name || name[0] == '\0' )
+    {
+        GiveError ( "Name of parent-Radio does not exist. Using a generic name.", FALSE );
+        name = str_dup ( "Radio" );
+    }
 
-	if (handle < 0)
-	{
-		GiveError("Handle range is too small to create parent-radio", FALSE);
-		return FALSE;
-	}
+    if ( handle < 0 )
+    {
+        GiveError ( "Handle range is too small to create parent-radio", FALSE );
+        return FALSE;
+    }
 
-	ctrl = new_control();
+    ctrl = new_control ();
 
-	if (!ctrl)
-	{
-		GiveError("Control failed to create properly. Exiting gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !ctrl )
+    {
+        GiveError ( "Control failed to create properly. Exiting gracefully.", TRUE );
+        return FALSE;
+    }
 
-	ctrl->name = str_dup(name);
-	ctrl->x = x;
-	ctrl->y = y;
-	ctrl->width = width;
-	ctrl->height = height;
-	ctrl->style |= style | WS_VISIBLE | WS_CHILD | BS_AUTORADIOBUTTON | WS_TABSTOP;
-	ctrl->handle = handle;
-	ctrl->parent = p_window;
-	ctrl->type = COMBO;
-	ctrl->id = id;
-	add_control_parent(p_window, ctrl);
+    ctrl->name = str_dup ( name );
+    ctrl->x = x;
+    ctrl->y = y;
+    ctrl->width = width;
+    ctrl->height = height;
+    ctrl->style |= style | WS_VISIBLE | WS_CHILD | BS_AUTORADIOBUTTON | WS_TABSTOP;
+    ctrl->handle = handle;
+    ctrl->parent = p_window;
+    ctrl->type = RADIO;
+    ctrl->id = id;
+    add_control_parent ( p_window, ctrl );
 
-	if (p_window->window_pointer == NULL)
-	{
-		show_parent(p_window);
-	}
+    if ( p_window->window_pointer == NULL )
+    {
+        show_parent ( p_window );
+    }
 
-	ctrl->handle = CreateWindowEx(WS_EX_WINDOWEDGE, (LPCSTR)"COMBOBOX", (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
-	ShowWindow(ctrl->handle, SW_SHOW);
-	return TRUE;
+    ctrl->handle = CreateWindowEx ( WS_EX_WINDOWEDGE, ( LPCSTR )"BUTTON", ( LPCSTR )ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU )( UINT_PTR )ctrl->id, g_hInst, 0 );
+    ShowWindow ( ctrl->handle, SW_SHOW );
+    return TRUE;
 }
 
-BOOL AddEdit_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show)
+BOOL AddCombo_Parent ( NWC_PARENT *p_window, char *name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show )
 {
-	NWC_CTRL* ctrl;
+    NWC_CTRL *ctrl;
 
-	if (!p_window)
-	{
-		GiveError("AddEdit_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !p_window )
+    {
+        GiveError ( "AddRadio_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE );
+        return FALSE;
+    }
 
-	if (!name || name[0] == '\0')
-	{
-		GiveError("Name of parent-Edit does not exist. Using a generic name.", FALSE);
-		name = str_dup("Editbox");
-	}
+    if ( !name || name[0] == '\0' )
+    {
+        GiveError ( "Name of parent-Radio does not exist. Using a generic name.", FALSE );
+        name = str_dup ( "Radio" );
+    }
 
-	if (handle < 0)
-	{
-		GiveError("Handle range is too small to create parent-Edit", FALSE);
-		return FALSE;
-	}
+    if ( handle < 0 )
+    {
+        GiveError ( "Handle range is too small to create parent-radio", FALSE );
+        return FALSE;
+    }
 
-	ctrl = new_control();
+    ctrl = new_control ();
 
-	if (!ctrl)
-	{
-		GiveError("Control failed to create properly. Exiting gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !ctrl )
+    {
+        GiveError ( "Control failed to create properly. Exiting gracefully.", TRUE );
+        return FALSE;
+    }
 
-	ctrl->name = str_dup(name);
-	ctrl->x = x;
-	ctrl->y = y;
-	ctrl->width = width;
-	ctrl->height = height;
-	ctrl->style |= style | WS_VISIBLE | WS_CHILD | WS_TABSTOP;
-	ctrl->handle = handle;
-	ctrl->parent = p_window;
-	ctrl->type = EDIT;
-	ctrl->id = id;
-	add_control_parent(p_window, ctrl);
+    ctrl->name = str_dup ( name );
+    ctrl->x = x;
+    ctrl->y = y;
+    ctrl->width = width;
+    ctrl->height = height;
+    ctrl->style |= style | WS_VISIBLE | WS_CHILD | BS_AUTORADIOBUTTON | WS_TABSTOP;
+    ctrl->handle = handle;
+    ctrl->parent = p_window;
+    ctrl->type = COMBO;
+    ctrl->id = id;
+    add_control_parent ( p_window, ctrl );
 
-	if (ctrl->style & ES_MULTILINE)
-		ctrl->style &= ~WS_TABSTOP;
+    if ( p_window->window_pointer == NULL )
+    {
+        show_parent ( p_window );
+    }
 
-	if (p_window->window_pointer == NULL)
-	{
-		show_parent(p_window);
-	}
-
-	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT, (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_control, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
-	//CreateWindowEx((DWORD)p_window->window_options, p_window->name, p_window->name,(DWORD)p_window->style_options, p_window->x, p_window->y, p_window->width, p_window->heigth, p_window->window_control, 0, p_window->instance, 0);
-	CTRL_SetText(ctrl->parent, ctrl->name, "");
-	CTRL_ChangeFont(p_window, ctrl->name, "Courier New");
-	ShowWindow(ctrl->handle, SW_SHOW);
-	return TRUE;
+    ctrl->handle = CreateWindowEx ( WS_EX_WINDOWEDGE, ( LPCSTR )"COMBOBOX", ( LPCSTR )ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU )( UINT_PTR )ctrl->id, g_hInst, 0 );
+    ShowWindow ( ctrl->handle, SW_SHOW );
+    return TRUE;
 }
 
-char* CTRL_gettext(NWC_PARENT* p_window, char* name)
+BOOL AddEdit_Parent ( NWC_PARENT *p_window, char *name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show )
 {
-	/* Returns the text that the control holds */
+    NWC_CTRL *ctrl;
 
-	CHAR* to_ret;
-	int len;
-	int i;
+    if ( !p_window )
+    {
+        GiveError ( "AddEdit_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE );
+        return FALSE;
+    }
 
-	to_ret = NULL;
-	len = 0;
-	i = 0;
+    if ( !name || name[0] == '\0' )
+    {
+        GiveError ( "Name of parent-Edit does not exist. Using a generic name.", FALSE );
+        name = str_dup ( "Editbox" );
+    }
 
-	if (!p_window || !name)
-		return NULL;
+    if ( handle < 0 )
+    {
+        GiveError ( "Handle range is too small to create parent-Edit", FALSE );
+        return FALSE;
+    }
 
-	for (i = 0; i < p_window->max_controls; i++)
-	{
-		if (!p_window->controls)
-			continue;
-		if (!p_window->controls[i])
-			continue;
-		if (p_window->controls[i] == NULL)
-			continue;
+    ctrl = new_control ();
 
-		if (strstr(p_window->controls[i]->name, name))
-		{
-			len =(int) SendMessage(p_window->controls[i]->handle, WM_GETTEXTLENGTH, 0, 0);
-			if (len == 0)
-				return NULL;
-			to_ret = (char*)malloc((sizeof(char*) * len) + 1);
+    if ( !ctrl )
+    {
+        GiveError ( "Control failed to create properly. Exiting gracefully.", TRUE );
+        return FALSE;
+    }
 
-			SendMessage(p_window->controls[i]->handle, WM_GETTEXT, len + 1, (LPARAM)(LPCSTR)to_ret);
+    ctrl->name = str_dup ( name );
+    ctrl->x = x;
+    ctrl->y = y;
+    ctrl->width = width;
+    ctrl->height = height;
+    ctrl->style |= style | WS_VISIBLE | WS_CHILD | WS_TABSTOP;
+    ctrl->handle = handle;
+    ctrl->parent = p_window;
+    ctrl->type = EDIT;
+    ctrl->id = id;
+    add_control_parent ( p_window, ctrl );
 
-			return to_ret;
-		}
-	}
+    if ( ctrl->style & ES_MULTILINE )
+        ctrl->style &= ~WS_TABSTOP;
 
-	return NULL;
+    if ( p_window->window_pointer == NULL )
+    {
+        show_parent ( p_window );
+    }
+
+    ctrl->handle = CreateWindowEx ( WS_EX_CLIENTEDGE, WC_EDIT, ( LPCSTR )ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_control, ( HMENU )( UINT_PTR )ctrl->id, g_hInst, 0 );
+    //CreateWindowEx((DWORD)p_window->window_options, p_window->name, p_window->name,(DWORD)p_window->style_options, p_window->x, p_window->y, p_window->width, p_window->heigth, p_window->window_control, 0, p_window->instance, 0);
+    CTRL_SetText ( ctrl->parent, ctrl->name, "" );
+    CTRL_ChangeFont ( p_window, ctrl->name, "Courier New" );
+    ShowWindow ( ctrl->handle, SW_SHOW );
+    return TRUE;
 }
 
-void CTRL_ChangeFont(NWC_PARENT* p_window, char* name, char* fontname)
+char *CTRL_gettext ( NWC_PARENT *p_window, char *name )
 {
-	int i;
-	static HFONT font;
-	//	RECT r;
+    /* Returns the text that the control holds */
 
-	if (!p_window || !name || !fontname)
-		return;
+    CHAR *to_ret;
+    int len;
+    int i;
 
-	if (!font)
-	{
-		if ((font = CreateFont(15, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, DEFAULT_QUALITY, 0, (LPCSTR)fontname)) == NULL)
-		{
-			GiveError("Error creating font.", FALSE);
-			return;
-		}
-	}
-	for (i = 0; i < p_window->max_controls; i++)
-	{
-		if (p_window->controls[i] == NULL)
-			continue;
-		if (strstr(p_window->controls[i]->name, name))
-		{
-			SendMessage(p_window->controls[i]->handle, WM_SETFONT, (WPARAM)font, 0);
-		}
-	}
+    to_ret = NULL;
+    len = 0;
+    i = 0;
+
+    if ( !p_window || !name )
+        return NULL;
+
+    for ( i = 0; i < p_window->max_controls; i++ )
+    {
+        if ( !p_window->controls )
+            continue;
+        if ( !p_window->controls[i] )
+            continue;
+        if ( p_window->controls[i] == NULL )
+            continue;
+
+        if ( strstr ( p_window->controls[i]->name, name ) )
+        {
+            len = ( int )SendMessage ( p_window->controls[i]->handle, WM_GETTEXTLENGTH, 0, 0 );
+            if ( len == 0 )
+                return NULL;
+            to_ret = ( char * )malloc ( (sizeof ( char * ) * len) + 1 );
+
+            SendMessage ( p_window->controls[i]->handle, WM_GETTEXT, len + 1, ( LPARAM )( LPCSTR )to_ret );
+
+            return to_ret;
+        }
+    }
+
+    return NULL;
 }
 
-void CTRL_ChangeFont_All(NWC_PARENT* p_window, int type, char* fontname)
+void CTRL_ChangeFont ( NWC_PARENT *p_window, char *name, char *fontname )
 {
-	/* Changes all fonts of all the 'type's of a window/parent. Must match tpe*/
-	int i;
+    int i;
+    static HFONT font;
+    //	RECT r;
 
-	if (!p_window)
-		return;
+    if ( !p_window || !name || !fontname )
+        return;
 
-	for (i = 0; i < p_window->max_controls; i++)
-	{
-		if (p_window->controls[i] == NULL)
-			continue;
-		if (p_window->controls[i]->type == type)
-		{
-			CTRL_ChangeFont(p_window, p_window->controls[i]->name, fontname);
-		}
-	}
+    if ( !font )
+    {
+        if ( (font = CreateFont ( 15, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, DEFAULT_QUALITY, 0, ( LPCSTR )fontname )) == NULL )
+        {
+            GiveError ( "Error creating font.", FALSE );
+            return;
+        }
+    }
+    for ( i = 0; i < p_window->max_controls; i++ )
+    {
+        if ( p_window->controls[i] == NULL )
+            continue;
+        if ( strstr ( p_window->controls[i]->name, name ) )
+        {
+            SendMessage ( p_window->controls[i]->handle, WM_SETFONT, ( WPARAM )font, 0 );
+        }
+    }
 }
 
-char* combo_get_text(NWC_PARENT* p_window, char* name, int idx)
+void CTRL_ChangeFont_All ( NWC_PARENT *p_window, int type, char *fontname )
 {
-	NWC_CTRL* ctrl;
-	int count;
-	static str[1024];
+    /* Changes all fonts of all the 'type's of a window/parent. Must match tpe*/
+    int i;
 
-	count = 0;
+    if ( !p_window )
+        return;
 
-	if (!p_window || !name)
-	{
-		return NULL;
-	}
-
-	ctrl = get_control(p_window, name);
-
-	if (!ctrl || ctrl == NULL)
-	{
-		GiveError("Listview was not found. (DelitemIDXlist)", 0);
-		return NULL;
-	}
-	if (ctrl->type != COMBO)
-		return NULL;
-
-	if ((count = (int)SendMessage(ctrl->handle, CB_GETCOUNT, 0, 0)) == LB_ERR)
-	{
-		GiveError("Sendmessage error for listview (DelitemIDXlist)", 0);
-		return NULL;
-	}
-
-	if (idx > count || idx < 0)
-		return NULL;
-
-	SendMessage(ctrl->handle, CB_GETLBTEXT, (WPARAM)idx, (LPARAM)&str);
-	return (char*)str;
+    for ( i = 0; i < p_window->max_controls; i++ )
+    {
+        if ( p_window->controls[i] == NULL )
+            continue;
+        if ( p_window->controls[i]->type == type )
+        {
+            CTRL_ChangeFont ( p_window, p_window->controls[i]->name, fontname );
+        }
+    }
 }
 
-void CTRL_List_additem(NWC_PARENT* p_window, char* name, char* item)
+char *combo_get_text ( NWC_PARENT *p_window, char *name, int idx )
 {
-	NWC_CTRL* ctrl;
+    NWC_CTRL *ctrl;
+    int count;
+    static str[1024];
 
-	if (!p_window || !name || !item)
-	{
-		GiveError("Listbox Error", 0);
-		return;
-	}
+    count = 0;
 
-	ctrl = get_control(p_window, name);
+    if ( !p_window || !name )
+    {
+        return NULL;
+    }
 
-	if (!ctrl || ctrl == NULL)
-	{
-		GiveError("Control was not found for listview.", 0);
-		return;
-	}
+    ctrl = get_control ( p_window, name );
 
-	if (strlen(item) > 1024) // Truncate to 1024 bytes.
-		item[1024] = '\0';
+    if ( !ctrl || ctrl == NULL )
+    {
+        GiveError ( "Listview was not found. (DelitemIDXlist)", 0 );
+        return NULL;
+    }
+    if ( ctrl->type != COMBO )
+        return NULL;
 
-	if (ctrl->type != LISTBOX)
-		return;
+    if ( (count = ( int )SendMessage ( ctrl->handle, CB_GETCOUNT, 0, 0 )) == LB_ERR )
+    {
+        GiveError ( "Sendmessage error for listview (DelitemIDXlist)", 0 );
+        return NULL;
+    }
 
-	CTRL_ChangeFont(p_window, ctrl->name, "Courier");
-	SendMessage(ctrl->handle, LB_ADDSTRING, 0, (LPARAM)(LPCSTR)item);
+    if ( idx > count || idx < 0 )
+        return NULL;
+
+    SendMessage ( ctrl->handle, CB_GETLBTEXT, ( WPARAM )idx, ( LPARAM )&str );
+    return ( char * )str;
 }
 
-void CTRL_combo_additem(NWC_PARENT* p_window, char* name, char* item)
+void CTRL_List_additem ( NWC_PARENT *p_window, char *name, char *item )
 {
-	NWC_CTRL* ctrl;
+    NWC_CTRL *ctrl;
 
-	if (!p_window || !name || !item)
-	{
-		GiveError("Listbox Error", 0);
-		return;
-	}
+    if ( !p_window || !name || !item )
+    {
+        GiveError ( "Listbox Error", 0 );
+        return;
+    }
 
-	ctrl = get_control(p_window, name);
+    ctrl = get_control ( p_window, name );
 
-	if (!ctrl || ctrl == NULL)
-	{
-		GiveError("Control was not found for listview.", 0);
-		return;
-	}
+    if ( !ctrl || ctrl == NULL )
+    {
+        GiveError ( "Control was not found for listview.", 0 );
+        return;
+    }
 
-	if (strlen(item) > 1024) // Truncate to 1024 bytes.
-		item[1024] = '\0';
+    if ( strlen ( item ) > 1024 ) // Truncate to 1024 bytes.
+        item[1024] = '\0';
 
-	if (ctrl->type != COMBO)
-		return;
+    if ( ctrl->type != LISTBOX )
+        return;
 
-	if (strlen(item) < 1)
-		return;
-
-	CTRL_ChangeFont(p_window, ctrl->name, "Courier");
-	SendMessage(ctrl->handle, CB_ADDSTRING, 0, (LPARAM)(LPCSTR)item);
+    CTRL_ChangeFont ( p_window, ctrl->name, "Courier" );
+    SendMessage ( ctrl->handle, LB_ADDSTRING, 0, ( LPARAM )( LPCSTR )item );
 }
 
-void CTRL_combo_clearlist(NWC_PARENT* p_window, char* name)
+void CTRL_combo_additem ( NWC_PARENT *p_window, char *name, char *item )
 {
-	NWC_CTRL* ctrl;
-	int count;
+    NWC_CTRL *ctrl;
 
-	if (!p_window || !name)
-	{
-		return;
-	}
+    if ( !p_window || !name || !item )
+    {
+        GiveError ( "Listbox Error", 0 );
+        return;
+    }
 
-	ctrl = get_control(p_window, name);
+    ctrl = get_control ( p_window, name );
 
-	if (!ctrl || ctrl == NULL)
-	{
-		GiveError("Listview was not found. (Clearlist)", 0);
-		return;
-	}
+    if ( !ctrl || ctrl == NULL )
+    {
+        GiveError ( "Control was not found for listview.", 0 );
+        return;
+    }
 
-	if (ctrl->type != COMBO)
-		return;
+    if ( strlen ( item ) > 1024 ) // Truncate to 1024 bytes.
+        item[1024] = '\0';
 
-	if ((count = (int)SendMessage(ctrl->handle, CB_GETCOUNT, 0, 0)) == LB_ERR)
-	{
-		GiveError("Sendmessage error for combo (Clearlist)", 0);
-		return;
-	}
+    if ( ctrl->type != COMBO )
+        return;
 
-	for (; count >= 0; count--) // Delete backwards.
-	{
-		SendMessage(ctrl->handle, CB_DELETESTRING, (WPARAM)count, 0);
-	}
+    if ( strlen ( item ) < 1 )
+        return;
 
-	return;
+    CTRL_ChangeFont ( p_window, ctrl->name, "Courier" );
+    SendMessage ( ctrl->handle, CB_ADDSTRING, 0, ( LPARAM )( LPCSTR )item );
 }
 
-void CTRL_List_clearlist(NWC_PARENT* p_window, char* name)
+void CTRL_combo_clearlist ( NWC_PARENT *p_window, char *name )
 {
-	NWC_CTRL* ctrl;
-	int count;
+    NWC_CTRL *ctrl;
+    int count;
 
-	if (!p_window || !name)
-	{
-		return;
-	}
+    if ( !p_window || !name )
+    {
+        return;
+    }
 
-	ctrl = get_control(p_window, name);
+    ctrl = get_control ( p_window, name );
 
-	if (!ctrl || ctrl == NULL)
-	{
-		GiveError("Listview was not found. (Clearlist)", 0);
-		return;
-	}
+    if ( !ctrl || ctrl == NULL )
+    {
+        GiveError ( "Listview was not found. (Clearlist)", 0 );
+        return;
+    }
 
-	if (ctrl->type != LISTBOX)
-		return;
+    if ( ctrl->type != COMBO )
+        return;
 
-	if ((count = (int)SendMessage(ctrl->handle, LB_GETCOUNT, 0, 0)) == LB_ERR)
-	{
-		GiveError("Sendmessage error for listview (Clearlist)", 0);
-		return;
-	}
+    if ( (count = ( int )SendMessage ( ctrl->handle, CB_GETCOUNT, 0, 0 )) == LB_ERR )
+    {
+        GiveError ( "Sendmessage error for combo (Clearlist)", 0 );
+        return;
+    }
 
-	for (; count >= 0; count--) // Delete backwards.
-	{
-		SendMessage(ctrl->handle, LB_DELETESTRING, (WPARAM)count, 0);
-	}
+    for ( ; count >= 0; count-- ) // Delete backwards.
+    {
+        SendMessage ( ctrl->handle, CB_DELETESTRING, ( WPARAM )count, 0 );
+    }
 
-	return;
+    return;
 }
 
-void CTRL_combo_delitem(NWC_PARENT* p_window, char* name, char* item)
+void CTRL_List_clearlist ( NWC_PARENT *p_window, char *name )
 {
-	NWC_CTRL* ctrl;
-	int count;
-	int i;
-	char buf[1024];
+    NWC_CTRL *ctrl;
+    int count;
 
-	i = count = 0;
-	buf[0] = '\0';
+    if ( !p_window || !name )
+    {
+        return;
+    }
 
-	if (!p_window || !name)
-	{
-		return;
-	}
+    ctrl = get_control ( p_window, name );
 
-	ctrl = get_control(p_window, name);
+    if ( !ctrl || ctrl == NULL )
+    {
+        GiveError ( "Listview was not found. (Clearlist)", 0 );
+        return;
+    }
 
-	if (!ctrl || ctrl == NULL)
-	{
-		GiveError("Listview was not found. (Delitemlist)", 0);
-		return;
-	}
-	if (ctrl->type != COMBO)
-		return;
+    if ( ctrl->type != LISTBOX )
+        return;
 
-	if ((count =(int) SendMessage(ctrl->handle, CB_GETCOUNT, 0, 0)) == LB_ERR)
-	{
-		GiveError("Sendmessage error for listview (DelItemlist)", 0);
-		return;
-	}
+    if ( (count = ( int )SendMessage ( ctrl->handle, LB_GETCOUNT, 0, 0 )) == LB_ERR )
+    {
+        GiveError ( "Sendmessage error for listview (Clearlist)", 0 );
+        return;
+    }
 
-	for (i = 0; i <= count; i++)
-	{
-		SendMessage(ctrl->handle, CB_GETLBTEXT, (WPARAM)i, (LPARAM)(LPCSTR)buf);
-		if (!strcmp(buf, item))
-		{
-			SendMessage(ctrl->handle, CB_DELETESTRING, (WPARAM)i, 0);
-		}
-	}
-	return;
+    for ( ; count >= 0; count-- ) // Delete backwards.
+    {
+        SendMessage ( ctrl->handle, LB_DELETESTRING, ( WPARAM )count, 0 );
+    }
+
+    return;
 }
 
-void CTRL_List_delitem(NWC_PARENT* p_window, char* name, char* item)
+void CTRL_combo_delitem ( NWC_PARENT *p_window, char *name, char *item )
 {
-	NWC_CTRL* ctrl;
-	int count;
-	int i;
-	char buf[1024];
+    NWC_CTRL *ctrl;
+    int count;
+    int i;
+    char buf[1024];
 
-	i = count = 0;
-	buf[0] = '\0';
+    i = count = 0;
+    buf[0] = '\0';
 
-	if (!p_window || !name)
-	{
-		return;
-	}
+    if ( !p_window || !name )
+    {
+        return;
+    }
 
-	ctrl = get_control(p_window, name);
+    ctrl = get_control ( p_window, name );
 
-	if (!ctrl || ctrl == NULL)
-	{
-		GiveError("Listview was not found. (Delitemlist)", 0);
-		return;
-	}
-	if (ctrl->type != LISTBOX)
-		return;
+    if ( !ctrl || ctrl == NULL )
+    {
+        GiveError ( "Listview was not found. (Delitemlist)", 0 );
+        return;
+    }
+    if ( ctrl->type != COMBO )
+        return;
 
-	if ((count = (int)SendMessage(ctrl->handle, LB_GETCOUNT, 0, 0)) == LB_ERR)
-	{
-		GiveError("Sendmessage error for listview (DelItemlist)", 0);
-		return;
-	}
+    if ( (count = ( int )SendMessage ( ctrl->handle, CB_GETCOUNT, 0, 0 )) == LB_ERR )
+    {
+        GiveError ( "Sendmessage error for listview (DelItemlist)", 0 );
+        return;
+    }
 
-	for (i = 0; i <= count; i++)
-	{
-		SendMessage(ctrl->handle, LB_GETTEXT, (WPARAM)i, (LPARAM)(LPCSTR)buf);
-		if (!strcmp(buf, item))
-		{
-			SendMessage(ctrl->handle, LB_DELETESTRING, (WPARAM)i, 0);
-		}
-	}
-	return;
+    for ( i = 0; i <= count; i++ )
+    {
+        SendMessage ( ctrl->handle, CB_GETLBTEXT, ( WPARAM )i, ( LPARAM )( LPCSTR )buf );
+        if ( !strcmp ( buf, item ) )
+        {
+            SendMessage ( ctrl->handle, CB_DELETESTRING, ( WPARAM )i, 0 );
+        }
+    }
+    return;
 }
 
-void CTRL_combo_delitem_idx(NWC_PARENT* p_window, char* name, int idx)
+void CTRL_List_delitem ( NWC_PARENT *p_window, char *name, char *item )
 {
-	NWC_CTRL* ctrl;
-	int count;
+    NWC_CTRL *ctrl;
+    int count;
+    int i;
+    char buf[1024];
 
-	count = 0;
+    i = count = 0;
+    buf[0] = '\0';
 
-	if (!p_window || !name)
-	{
-		return;
-	}
+    if ( !p_window || !name )
+    {
+        return;
+    }
 
-	ctrl = get_control(p_window, name);
+    ctrl = get_control ( p_window, name );
 
-	if (!ctrl || ctrl == NULL)
-	{
-		GiveError("Listview was not found. (DelitemIDXlist)", 0);
-		return;
-	}
-	if (ctrl->type != COMBO)
-		return;
+    if ( !ctrl || ctrl == NULL )
+    {
+        GiveError ( "Listview was not found. (Delitemlist)", 0 );
+        return;
+    }
+    if ( ctrl->type != LISTBOX )
+        return;
 
-	if ((count =(int) SendMessage(ctrl->handle, CB_GETCOUNT, 0, 0)) == LB_ERR)
-	{
-		GiveError("Sendmessage error for listview (DelitemIDXlist)", 0);
-		return;
-	}
+    if ( (count = ( int )SendMessage ( ctrl->handle, LB_GETCOUNT, 0, 0 )) == LB_ERR )
+    {
+        GiveError ( "Sendmessage error for listview (DelItemlist)", 0 );
+        return;
+    }
 
-	if (idx > count || idx < 0)
-		return;
-
-	SendMessage(ctrl->handle, CB_DELETESTRING, (WPARAM)idx, 0);
-	return;
+    for ( i = 0; i <= count; i++ )
+    {
+        SendMessage ( ctrl->handle, LB_GETTEXT, ( WPARAM )i, ( LPARAM )( LPCSTR )buf );
+        if ( !strcmp ( buf, item ) )
+        {
+            SendMessage ( ctrl->handle, LB_DELETESTRING, ( WPARAM )i, 0 );
+        }
+    }
+    return;
 }
 
-void CTRL_List_delitem_idx(NWC_PARENT* p_window, char* name, int idx)
+void CTRL_combo_delitem_idx ( NWC_PARENT *p_window, char *name, int idx )
 {
-	NWC_CTRL* ctrl;
-	int count;
+    NWC_CTRL *ctrl;
+    int count;
 
-	count = 0;
+    count = 0;
 
-	if (!p_window || !name)
-	{
-		return;
-	}
+    if ( !p_window || !name )
+    {
+        return;
+    }
 
-	ctrl = get_control(p_window, name);
+    ctrl = get_control ( p_window, name );
 
-	if (!ctrl || ctrl == NULL)
-	{
-		GiveError("Listview was not found. (DelitemIDXlist)", 0);
-		return;
-	}
-	if (ctrl->type != LISTBOX)
-		return;
+    if ( !ctrl || ctrl == NULL )
+    {
+        GiveError ( "Listview was not found. (DelitemIDXlist)", 0 );
+        return;
+    }
+    if ( ctrl->type != COMBO )
+        return;
 
-	if ((count = (int)SendMessage(ctrl->handle, LB_GETCOUNT, 0, 0)) == LB_ERR)
-	{
-		GiveError("Sendmessage error for listview (DelitemIDXlist)", 0);
-		return;
-	}
+    if ( (count = ( int )SendMessage ( ctrl->handle, CB_GETCOUNT, 0, 0 )) == LB_ERR )
+    {
+        GiveError ( "Sendmessage error for listview (DelitemIDXlist)", 0 );
+        return;
+    }
 
-	if (idx > count || idx < 0)
-		return;
+    if ( idx > count || idx < 0 )
+        return;
 
-	SendMessage(ctrl->handle, LB_DELETESTRING, (WPARAM)idx, 0);
-	return;
+    SendMessage ( ctrl->handle, CB_DELETESTRING, ( WPARAM )idx, 0 );
+    return;
 }
 
-int CTRL_combo_get_sel_idx(NWC_PARENT* p_window, char* name)
+void CTRL_List_delitem_idx ( NWC_PARENT *p_window, char *name, int idx )
 {
-	NWC_CTRL* ctrl;
-	int count;
+    NWC_CTRL *ctrl;
+    int count;
 
-	count = -1;
+    count = 0;
 
-	if (!p_window || !name)
-	{
-		return -1;
-	}
+    if ( !p_window || !name )
+    {
+        return;
+    }
 
-	ctrl = get_control(p_window, name);
+    ctrl = get_control ( p_window, name );
 
-	if (!ctrl || ctrl == NULL)
-	{
-		GiveError("Listview was not found. (DelitemIDXlist)", 0);
-		return -1;
-	}
-	if (ctrl->type != COMBO)
-		return -1;
+    if ( !ctrl || ctrl == NULL )
+    {
+        GiveError ( "Listview was not found. (DelitemIDXlist)", 0 );
+        return;
+    }
+    if ( ctrl->type != LISTBOX )
+        return;
 
-	if ((count = (int)SendMessage(ctrl->handle, CB_GETCOUNT, 0, 0)) == LB_ERR)
-	{
-		GiveError("Sendmessage error for listview (DelitemIDXlist)", 0);
-		return -1;
-	}
+    if ( (count = ( int )SendMessage ( ctrl->handle, LB_GETCOUNT, 0, 0 )) == LB_ERR )
+    {
+        GiveError ( "Sendmessage error for listview (DelitemIDXlist)", 0 );
+        return;
+    }
 
-	count = (int)SendMessage(ctrl->handle, CB_GETCURSEL, 0, 0);
+    if ( idx > count || idx < 0 )
+        return;
 
-	if (count == CB_ERR)
-		return -1;
-	return count;
+    SendMessage ( ctrl->handle, LB_DELETESTRING, ( WPARAM )idx, 0 );
+    return;
 }
 
-int CTRL_list_get_sel_idx(NWC_PARENT* p_window, char* name)
+int CTRL_combo_get_sel_idx ( NWC_PARENT *p_window, char *name )
 {
-	NWC_CTRL* ctrl;
-	int count;
+    NWC_CTRL *ctrl;
+    int count;
 
-	count = -1;
+    count = -1;
 
-	if (!p_window || !name)
-	{
-		return -1;
-	}
+    if ( !p_window || !name )
+    {
+        return -1;
+    }
 
-	ctrl = get_control(p_window, name);
+    ctrl = get_control ( p_window, name );
 
-	if (!ctrl || ctrl == NULL)
-	{
-		GiveError("Listview was not found. (DelitemIDXlist)", 0);
-		return -1;
-	}
-	if (ctrl->type != LISTBOX)
-		return -1;
+    if ( !ctrl || ctrl == NULL )
+    {
+        GiveError ( "Listview was not found. (DelitemIDXlist)", 0 );
+        return -1;
+    }
+    if ( ctrl->type != COMBO )
+        return -1;
 
-	if ((count = (int)SendMessage(ctrl->handle, LB_GETCOUNT, 0, 0)) == LB_ERR)
-	{
-		GiveError("Sendmessage error for listview (DelitemIDXlist)", 0);
-		return -1;
-	}
+    if ( (count = ( int )SendMessage ( ctrl->handle, CB_GETCOUNT, 0, 0 )) == LB_ERR )
+    {
+        GiveError ( "Sendmessage error for listview (DelitemIDXlist)", 0 );
+        return -1;
+    }
 
-	count =(int) SendMessage(ctrl->handle, LB_GETCURSEL, 0, 0);
+    count = ( int )SendMessage ( ctrl->handle, CB_GETCURSEL, 0, 0 );
 
-	if (count == LB_ERR)
-		return -1;
-	return count;
+    if ( count == CB_ERR )
+        return -1;
+    return count;
 }
 
-void clist_add_col(NWC_PARENT* p_window, char* name, int width, char* text)
+int CTRL_list_get_sel_idx ( NWC_PARENT *p_window, char *name )
 {
-	NWC_CTRL* ctrl;
-	LV_COLUMN pcol;
+    NWC_CTRL *ctrl;
+    int count;
 
-	if (!p_window || !name || !text)
-	{
-		GiveError("Listbox Error", 0);
-		return;
-	}
+    count = -1;
 
-	ctrl = get_control(p_window, name);
+    if ( !p_window || !name )
+    {
+        return -1;
+    }
 
-	if (!ctrl || ctrl == NULL)
-	{
-		GiveError("Control was not found for listview.", 0);
-		return;
-	}
+    ctrl = get_control ( p_window, name );
 
-	if (strlen(text) > 1024) // Truncate to 1024 bytes.
-		text[1024] = '\0';
+    if ( !ctrl || ctrl == NULL )
+    {
+        GiveError ( "Listview was not found. (DelitemIDXlist)", 0 );
+        return -1;
+    }
+    if ( ctrl->type != LISTBOX )
+        return -1;
 
-	if (ctrl->type != LISTBOX)
-		return;
+    if ( (count = ( int )SendMessage ( ctrl->handle, LB_GETCOUNT, 0, 0 )) == LB_ERR )
+    {
+        GiveError ( "Sendmessage error for listview (DelitemIDXlist)", 0 );
+        return -1;
+    }
 
-	pcol.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
-	pcol.fmt = LVCFMT_LEFT;
-	pcol.cx = width;
-	pcol.pszText = (LPSTR)text;
+    count = ( int )SendMessage ( ctrl->handle, LB_GETCURSEL, 0, 0 );
 
-	if (ListView_InsertColumn(ctrl->handle, ctrl->clist_index, &pcol) == -1)
-	{
-		GiveError("Failed to insert Column into list view.", 1);
-		return;
-	}
-	ctrl->clist_index++;
-	return;
+    if ( count == LB_ERR )
+        return -1;
+    return count;
 }
 
-void clist_clear_list(NWC_PARENT* p_window, char* name)
+void clist_add_col ( NWC_PARENT *p_window, char *name, int width, char *text )
 {
-	int i;
-	NWC_CTRL* ctrl;
+    NWC_CTRL *ctrl;
+    LV_COLUMN pcol;
 
-	if (!p_window || !name)
-	{
-		GiveError("Listbox Error", 0);
-		return;
-	}
+    if ( !p_window || !name || !text )
+    {
+        GiveError ( "Listbox Error", 0 );
+        return;
+    }
 
-	ctrl = get_control(p_window, name);
+    ctrl = get_control ( p_window, name );
 
-	if (!ctrl || ctrl == NULL)
-	{
-		GiveError("Control was not found for listview.", 0);
-		return;
-	}
+    if ( !ctrl || ctrl == NULL )
+    {
+        GiveError ( "Control was not found for listview.", 0 );
+        return;
+    }
 
-	if (ctrl->type != LISTBOX)
-		return;
+    if ( strlen ( text ) > 1024 ) // Truncate to 1024 bytes.
+        text[1024] = '\0';
 
-	for (i = ctrl->clist_index - 1; i >= 0; i--)
-		ListView_DeleteItem(ctrl->handle, i);
+    if ( ctrl->type != LISTBOX )
+        return;
 
-	ctrl->clist_index = 0;
+    pcol.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
+    pcol.fmt = LVCFMT_LEFT;
+    pcol.cx = width;
+    pcol.pszText = ( LPSTR )text;
 
-	return;
+    if ( ListView_InsertColumn ( ctrl->handle, ctrl->clist_index, &pcol ) == -1 )
+    {
+        GiveError ( "Failed to insert Column into list view.", 1 );
+        return;
+    }
+    ctrl->clist_index++;
+    return;
 }
 
-void clist_add_data(NWC_PARENT* p_window, char* name, char** text, int count)
+void clist_clear_list ( NWC_PARENT *p_window, char *name )
 {
-	NWC_CTRL* ctrl;
-	LVITEM listItem;
-	LVITEM subItem;
-	int i;
+    int i;
+    NWC_CTRL *ctrl;
 
-	if (!p_window || !name || !text)
-	{
-		GiveError("Listbox Error", 0);
-		return;
-	}
+    if ( !p_window || !name )
+    {
+        GiveError ( "Listbox Error", 0 );
+        return;
+    }
 
-	ctrl = get_control(p_window, name);
+    ctrl = get_control ( p_window, name );
 
-	if (!ctrl || ctrl == NULL)
-	{
-		GiveError("Control was not found for listview.", 0);
-		return;
-	}
+    if ( !ctrl || ctrl == NULL )
+    {
+        GiveError ( "Control was not found for listview.", 0 );
+        return;
+    }
 
-	//	if (ctrl->type != LISTBOX)
-		//	return;
+    if ( ctrl->type != LISTBOX )
+        return;
 
-	listItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM | LVIF_STATE | LVIF_DI_SETITEM;
-	listItem.state = 0;
-	listItem.stateMask = 0;
-	listItem.pszText = (LPSTR)text[0];
-	listItem.iItem = ctrl->clist_index;
+    for ( i = ctrl->clist_index - 1; i >= 0; i-- )
+        ListView_DeleteItem ( ctrl->handle, i );
 
-	listItem.iSubItem = 0;
+    ctrl->clist_index = 0;
 
-	listItem.lParam = (LPARAM)NULL;
-
-	ListView_InsertItem(ctrl->handle, &listItem);
-
-	for (i = 0; i < count; i++)
-	{
-		subItem.iItem = ctrl->clist_index;
-		subItem.iSubItem = i;
-		subItem.mask = LVIF_TEXT;
-		subItem.pszText = (LPSTR)text[i];
-		ListView_SetItem(ctrl->handle, &subItem);
-		//ctrl->clist_index++;
-	}
-	ctrl->clist_index++;
-
-	return;
+    return;
 }
 
-BOOL AddRichedit_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show)
+void clist_add_data ( NWC_PARENT *p_window, char *name, char **text, int count )
 {
-	NWC_CTRL* ctrl;
+    NWC_CTRL *ctrl;
+    LVITEM listItem;
+    LVITEM subItem;
+    int i;
 
-	if (!p_window)
-	{
-		GiveError("AddEdit_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !p_window || !name || !text )
+    {
+        GiveError ( "Listbox Error", 0 );
+        return;
+    }
 
-	if (!name || name[0] == '\0')
-	{
-		GiveError("Name of parent-Edit does not exist. Using a generic name.", FALSE);
-		name = str_dup("Editbox");
-	}
+    ctrl = get_control ( p_window, name );
 
-	if (handle < 0)
-	{
-		GiveError("Handle range is too small to create parent-Edit", FALSE);
-		return FALSE;
-	}
+    if ( !ctrl || ctrl == NULL )
+    {
+        GiveError ( "Control was not found for listview.", 0 );
+        return;
+    }
 
-	ctrl = new_control();
+    //	if (ctrl->type != LISTBOX)
+        //	return;
 
-	if (!ctrl)
-	{
-		GiveError("Control failed to create properly. Exiting gracefully.", TRUE);
-		return FALSE;
-	}
+    listItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM | LVIF_STATE | LVIF_DI_SETITEM;
+    listItem.state = 0;
+    listItem.stateMask = 0;
+    listItem.pszText = ( LPSTR )text[0];
+    listItem.iItem = ctrl->clist_index;
 
-	ctrl->name = str_dup(name);
-	ctrl->x = x;
-	ctrl->y = y;
-	ctrl->width = width;
-	ctrl->height = height;
-	ctrl->style |= style | WS_VISIBLE | WS_CHILD | WS_TABSTOP;
-	ctrl->handle = handle;
-	ctrl->parent = p_window;
-	ctrl->type = RICHEDIT;
-	ctrl->id = id;
-	add_control_parent(p_window, ctrl);
+    listItem.iSubItem = 0;
 
-	if (p_window->window_pointer == NULL)
-	{
-		show_parent(p_window);
-	}
+    listItem.lParam = ( LPARAM )NULL;
 
-	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, (LPCSTR)"RICHEDIT", (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
-	ShowWindow(ctrl->handle, SW_SHOW);
-	return TRUE;
+    ListView_InsertItem ( ctrl->handle, &listItem );
+
+    for ( i = 0; i < count; i++ )
+    {
+        subItem.iItem = ctrl->clist_index;
+        subItem.iSubItem = i;
+        subItem.mask = LVIF_TEXT;
+        subItem.pszText = ( LPSTR )text[i];
+        ListView_SetItem ( ctrl->handle, &subItem );
+        //ctrl->clist_index++;
+    }
+    ctrl->clist_index++;
+
+    return;
 }
 
-BOOL AddList_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show)
+BOOL AddRichedit_Parent ( NWC_PARENT *p_window, char *name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show )
 {
-	//	INITCOMMONCONTROLSEX listctrl;
-	NWC_CTRL* ctrl;
+    NWC_CTRL *ctrl;
 
-	if (!p_window)
-	{
-		GiveError("AddList_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !p_window )
+    {
+        GiveError ( "AddEdit_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE );
+        return FALSE;
+    }
 
-	if (!name || name[0] == '\0')
-	{
-		GiveError("Name of parent-List does not exist. Using a generic name.", FALSE);
-		name = str_dup("Listbox");
-	}
+    if ( !name || name[0] == '\0' )
+    {
+        GiveError ( "Name of parent-Edit does not exist. Using a generic name.", FALSE );
+        name = str_dup ( "Editbox" );
+    }
 
-	if (handle < 0)
-	{
-		GiveError("Handle range is too small to create parent-List", FALSE);
-		return FALSE;
-	}
+    if ( handle < 0 )
+    {
+        GiveError ( "Handle range is too small to create parent-Edit", FALSE );
+        return FALSE;
+    }
 
-	ctrl = new_control();
+    ctrl = new_control ();
 
-	if (!ctrl)
-	{
-		GiveError("Control failed to create properly. Exiting gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !ctrl )
+    {
+        GiveError ( "Control failed to create properly. Exiting gracefully.", TRUE );
+        return FALSE;
+    }
 
-	ctrl->name = str_dup(name);
-	ctrl->x = x;
-	ctrl->y = y;
-	ctrl->width = width;
-	ctrl->height = height;
-	ctrl->style |= style | WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_VSCROLL;
+    ctrl->name = str_dup ( name );
+    ctrl->x = x;
+    ctrl->y = y;
+    ctrl->width = width;
+    ctrl->height = height;
+    ctrl->style |= style | WS_VISIBLE | WS_CHILD | WS_TABSTOP;
+    ctrl->handle = handle;
+    ctrl->parent = p_window;
+    ctrl->type = RICHEDIT;
+    ctrl->id = id;
+    add_control_parent ( p_window, ctrl );
 
-	ctrl->handle = handle;
-	ctrl->parent = p_window;
-	ctrl->type = LISTBOX;
-	ctrl->id = id;
-	add_control_parent(p_window, ctrl);
+    if ( p_window->window_pointer == NULL )
+    {
+        show_parent ( p_window );
+    }
 
-	if (p_window->window_pointer == NULL)
-	{
-		show_parent(p_window);
-	}
-
-	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, (LPCSTR)"LISTBOX", (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR ) ctrl->id, g_hInst, 0);
-	ShowWindow(ctrl->handle, SW_SHOW);
-	return TRUE;
+    ctrl->handle = CreateWindowEx ( WS_EX_CLIENTEDGE, ( LPCSTR )"RICHEDIT", ( LPCSTR )ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU )( UINT_PTR )ctrl->id, g_hInst, 0 );
+    ShowWindow ( ctrl->handle, SW_SHOW );
+    return TRUE;
 }
 
-BOOL AddCList_Parent(NWC_PARENT* p_window, char* name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show)
+BOOL AddList_Parent ( NWC_PARENT *p_window, char *name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show )
 {
-	//	INITCOMMONCONTROLSEX listctrl;
-	NWC_CTRL* ctrl;
-	int sstyle;
+    //	INITCOMMONCONTROLSEX listctrl;
+    NWC_CTRL *ctrl;
 
-	if (!p_window)
-	{
-		GiveError("AddList_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !p_window )
+    {
+        GiveError ( "AddList_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE );
+        return FALSE;
+    }
 
-	if (!name || name[0] == '\0')
-	{
-		GiveError("Name of parent-List does not exist. Using a generic name.", FALSE);
-		name = str_dup("Listbox");
-	}
+    if ( !name || name[0] == '\0' )
+    {
+        GiveError ( "Name of parent-List does not exist. Using a generic name.", FALSE );
+        name = str_dup ( "Listbox" );
+    }
 
-	if (handle < 0)
-	{
-		GiveError("Handle range is too small to create parent-List", FALSE);
-		return FALSE;
-	}
+    if ( handle < 0 )
+    {
+        GiveError ( "Handle range is too small to create parent-List", FALSE );
+        return FALSE;
+    }
 
-	ctrl = new_control();
+    ctrl = new_control ();
 
-	if (!ctrl)
-	{
-		GiveError("Control failed to create properly. Exiting gracefully.", TRUE);
-		return FALSE;
-	}
+    if ( !ctrl )
+    {
+        GiveError ( "Control failed to create properly. Exiting gracefully.", TRUE );
+        return FALSE;
+    }
 
-	ctrl->name = str_dup(name);
-	ctrl->x = x;
-	ctrl->y = y;
-	ctrl->width = width;
-	ctrl->height = height;
-	ctrl->style |= style | WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_VSCROLL | LVS_SINGLESEL | LVS_NOSORTHEADER;
+    ctrl->name = str_dup ( name );
+    ctrl->x = x;
+    ctrl->y = y;
+    ctrl->width = width;
+    ctrl->height = height;
+    ctrl->style |= style | WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_VSCROLL;
 
-	ctrl->handle = handle;
-	ctrl->parent = p_window;
-	ctrl->type = LISTBOX;
-	ctrl->id = id;
-	ctrl->clist_index = 0;
-	add_control_parent(p_window, ctrl);
+    ctrl->handle = handle;
+    ctrl->parent = p_window;
+    ctrl->type = LISTBOX;
+    ctrl->id = id;
+    add_control_parent ( p_window, ctrl );
 
-	if (p_window->window_pointer == NULL)
-	{
-		show_parent(p_window);
-	}
+    if ( p_window->window_pointer == NULL )
+    {
+        show_parent ( p_window );
+    }
 
-	ctrl->handle = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, (LPCSTR)ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU ) ( UINT_PTR )ctrl->id, g_hInst, 0);
-	sstyle = (int)SendMessage(ctrl->handle, LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
-	sstyle = style | LVS_EX_FULLROWSELECT;
-	SendMessage(ctrl->handle, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, sstyle);
-
-	ShowWindow(ctrl->handle, SW_SHOW);
-	return TRUE;
+    ctrl->handle = CreateWindowEx ( WS_EX_CLIENTEDGE, ( LPCSTR )"LISTBOX", ( LPCSTR )ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU )( UINT_PTR )ctrl->id, g_hInst, 0 );
+    ShowWindow ( ctrl->handle, SW_SHOW );
+    return TRUE;
 }
 
-void DestroyParent(NWC_PARENT* p_window)
+BOOL AddCList_Parent ( NWC_PARENT *p_window, char *name, int x, int y, int width, int height, HWND handle, DWORD id, DWORD style, BOOL show )
 {
-	int i;
-	int f;
+    //	INITCOMMONCONTROLSEX listctrl;
+    NWC_CTRL *ctrl;
+    int sstyle;
 
-	f = 0;
-	
-	if (!p_window)
-	{
-		GiveError("Bad Window", 0);
-		return;
-	}
-	if (p_window == fake_window)
-		return; // We don't want to get rid of our fake Window.
-	for (i = 0; i < p_window->max_controls; i++)
-	{
-		if (p_window->controls[i] == NULL)
-			continue;
-		//if (p_window == (NWC_PARENT)p_window->controls[i])
-		//	continue; // Possible weird case bug.
-		LOG("Destroying: %s (%s)", p_window->controls[i]->name, p_window->name);
-		free(p_window->controls[i]->name);
-		DestroyWindow(p_window->controls[i]->handle);
-		free(p_window->controls[i]);
-		p_window->controls[i] = NULL;
-		f++;
-	}
+    if ( !p_window )
+    {
+        GiveError ( "AddList_Parent () attempted to add a button to a non-existant window (Parent). Attempting to exit gracefully.", TRUE );
+        return FALSE;
+    }
 
-	for (i = 0; i < max_parents; i++)
-	{
-		if (parents[i] == NULL)
-			continue;
-		if (parents[i] == p_window)
-			parents[i] = NULL;
-	}
-	
-	//free(p_window->controls);
-	//free(p_window->name);
-	//DestroyWindow(p_window->window_pointer);
-	free(p_window);
-	p_window = NULL;
-	return;
+    if ( !name || name[0] == '\0' )
+    {
+        GiveError ( "Name of parent-List does not exist. Using a generic name.", FALSE );
+        name = str_dup ( "Listbox" );
+    }
+
+    if ( handle < 0 )
+    {
+        GiveError ( "Handle range is too small to create parent-List", FALSE );
+        return FALSE;
+    }
+
+    ctrl = new_control ();
+
+    if ( !ctrl )
+    {
+        GiveError ( "Control failed to create properly. Exiting gracefully.", TRUE );
+        return FALSE;
+    }
+
+    ctrl->name = str_dup ( name );
+    ctrl->x = x;
+    ctrl->y = y;
+    ctrl->width = width;
+    ctrl->height = height;
+    ctrl->style |= style | WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_VSCROLL | LVS_SINGLESEL | LVS_NOSORTHEADER;
+
+    ctrl->handle = handle;
+    ctrl->parent = p_window;
+    ctrl->type = LISTBOX;
+    ctrl->id = id;
+    ctrl->clist_index = 0;
+    add_control_parent ( p_window, ctrl );
+
+    if ( p_window->window_pointer == NULL )
+    {
+        show_parent ( p_window );
+    }
+
+    ctrl->handle = CreateWindowEx ( WS_EX_CLIENTEDGE, WC_LISTVIEW, ( LPCSTR )ctrl->name, ctrl->style, ctrl->x, ctrl->y, ctrl->width, ctrl->height, p_window->window_pointer, ( HMENU )( UINT_PTR )ctrl->id, g_hInst, 0 );
+    sstyle = ( int )SendMessage ( ctrl->handle, LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0 );
+    sstyle = style | LVS_EX_FULLROWSELECT;
+    SendMessage ( ctrl->handle, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, sstyle );
+
+    ShowWindow ( ctrl->handle, SW_SHOW );
+    return TRUE;
 }
 
-void parent_disable_all(NWC_PARENT* p_window)
+void DestroyParent ( NWC_PARENT *p_window )
 {
-	int i;
+    int i;
+    int f;
 
-	if (!p_window)
-		return;
+    f = 0;
 
-	for (i = 0; i < p_window->max_controls; i++)
-	{
-		if (p_window->controls[i] == NULL)
-			continue;
-		EnableWindow(p_window->controls[i]->handle, FALSE);
-	}
-	return;
+    if ( !p_window )
+    {
+        GiveError ( "Bad Window", 0 );
+        return;
+    }
+    if ( p_window == fake_window )
+        return; // We don't want to get rid of our fake Window.
+    for ( i = 0; i < p_window->max_controls; i++ )
+    {
+        if ( p_window->controls[i] == NULL )
+            continue;
+        //if (p_window == (NWC_PARENT)p_window->controls[i])
+        //	continue; // Possible weird case bug.
+        LOG ( "Destroying: %s (%s)", p_window->controls[i]->name, p_window->name );
+        free ( p_window->controls[i]->name );
+        DestroyWindow ( p_window->controls[i]->handle );
+        free ( p_window->controls[i] );
+        p_window->controls[i] = NULL;
+        f++;
+    }
+
+    for ( i = 0; i < max_parents; i++ )
+    {
+        if ( parents[i] == NULL )
+            continue;
+        if ( parents[i] == p_window )
+            parents[i] = NULL;
+    }
+
+    //free(p_window->controls);
+    //free(p_window->name);
+    //DestroyWindow(p_window->window_pointer);
+    free ( p_window );
+    p_window = NULL;
+    return;
 }
 
-NWC_PARENT* NWC_GetParent(HWND hwnd)
+void parent_disable_all ( NWC_PARENT *p_window )
 {
-	int i;
+    int i;
 
-	if (!hwnd)
-		return NULL;
-	for (i = 0; i <= max_parents; i++)
-	{
-		if (parents[i] == NULL)
-			continue;
-		if (parents[i]->window_pointer == hwnd)
-			return parents[i];
-	}
-	return NULL;
+    if ( !p_window )
+        return;
+
+    for ( i = 0; i < p_window->max_controls; i++ )
+    {
+        if ( p_window->controls[i] == NULL )
+            continue;
+        EnableWindow ( p_window->controls[i]->handle, FALSE );
+    }
+    return;
 }
 
-BOOL CenterWindow(HWND hwnd, HWND hwndParent)
+NWC_PARENT *NWC_GetParent ( HWND hwnd )
 {
-	RECT rect, rectP;
-	int width, height;
-	int screenwidth, screenheight;
-	int x, y;
+    int i;
 
-	//make the window relative to its parent
+    if ( !hwnd )
+        return NULL;
+    for ( i = 0; i <= max_parents; i++ )
+    {
+        if ( parents[i] == NULL )
+            continue;
+        if ( parents[i]->window_pointer == hwnd )
+            return parents[i];
+    }
+    return NULL;
+}
 
-	GetWindowRect(hwnd, &rect);
-	GetWindowRect(hwndParent, &rectP);
+BOOL CenterWindow ( HWND hwnd, HWND hwndParent )
+{
+    RECT rect, rectP;
+    int width, height;
+    int screenwidth, screenheight;
+    int x, y;
 
-	width = rect.right - rect.left;
-	height = rect.bottom - rect.top;
+    //make the window relative to its parent
 
-	x = ((rectP.right - rectP.left) - width) / 2 + rectP.left;
-	y = ((rectP.bottom - rectP.top) - height) / 2 + rectP.top;
+    GetWindowRect ( hwnd, &rect );
+    GetWindowRect ( hwndParent, &rectP );
 
-	screenwidth = GetSystemMetrics(SM_CXSCREEN);
-	screenheight = GetSystemMetrics(SM_CYSCREEN);
+    width = rect.right - rect.left;
+    height = rect.bottom - rect.top;
 
-	//make sure that the dialog box never moves outside of
-	//the screen
-	if (x < 0) x = 0;
-	if (y < 0) y = 0;
-	if (x + width > screenwidth)  x = screenwidth - width;
-	if (y + height > screenheight) y = screenheight - height;
+    x = ((rectP.right - rectP.left) - width) / 2 + rectP.left;
+    y = ((rectP.bottom - rectP.top) - height) / 2 + rectP.top;
 
-	MoveWindow(hwnd, x, y, width, height, FALSE);
+    screenwidth = GetSystemMetrics ( SM_CXSCREEN );
+    screenheight = GetSystemMetrics ( SM_CYSCREEN );
 
-	return TRUE;
+    //make sure that the dialog box never moves outside of
+    //the screen
+    if ( x < 0 ) x = 0;
+    if ( y < 0 ) y = 0;
+    if ( x + width > screenwidth )  x = screenwidth - width;
+    if ( y + height > screenheight ) y = screenheight - height;
+
+    MoveWindow ( hwnd, x, y, width, height, FALSE );
+
+    return TRUE;
 }
 
 /* Get the width of the entire window, based on the controls within
@@ -1854,59 +1855,59 @@ BOOL CenterWindow(HWND hwnd, HWND hwndParent)
  * the window the proper width without having to guess numbers for width.
  */
 
-int get_max_control_width(NWC_PARENT* p)
+int get_max_control_width ( NWC_PARENT *p )
 {
-	int i;
-	int cur_width;
-	int width = 0;
-	int count = 0;
+    int i;
+    int cur_width;
+    int width = 0;
+    int count = 0;
 
-	cur_width = 0; // Starting point.
+    cur_width = 0; // Starting point.
 
-	if (!p)
-		return 0;
+    if ( !p )
+        return 0;
 
-	for (i = 0; i < p->max_controls; i++)
-	{
-		if (p->controls[i] == NULL)
-			continue;
-		count++;
-		width = (p->controls[i]->x + p->controls[i]->width);
-		//	width = (width * .05) + width;// Total width is x pos + width of control plus 1 for good measure.
-		if (width > cur_width)
-			cur_width = width;
-	}
-	cur_width = cur_width + 15;
-	return cur_width;
+    for ( i = 0; i < p->max_controls; i++ )
+    {
+        if ( p->controls[i] == NULL )
+            continue;
+        count++;
+        width = (p->controls[i]->x + p->controls[i]->width);
+        //	width = (width * .05) + width;// Total width is x pos + width of control plus 1 for good measure.
+        if ( width > cur_width )
+            cur_width = width;
+    }
+    cur_width = cur_width + 15;
+    return cur_width;
 }
 /* Get the heigth of the entire window based on the total heigth of
  * the lowest placed control. Same as get_max_control_width, but only
  * for the heigth -- Use only when all controls are placed or when
  * controls are resized and/or moved.
  */
-int get_max_control_heigth(NWC_PARENT* p)
+int get_max_control_heigth ( NWC_PARENT *p )
 {
-	int i;
-	int cur_height;
-	int height = 0;
-	int count = 0;
-	cur_height = 0; // Starting point.
+    int i;
+    int cur_height;
+    int height = 0;
+    int count = 0;
+    cur_height = 0; // Starting point.
 
-	if (!p)
-		return 0;
+    if ( !p )
+        return 0;
 
-	for (i = 0; i < p->max_controls; i++)
-	{
-		if (p->controls[i] == NULL)
-			continue;
-		count++;
-		height = p->controls[i]->y + p->controls[i]->height; // Total width is x pos + width of control plus 1 for good measure.
-	//	height = (height * .05) + height;
-		if (height > cur_height)
-			cur_height = height;
-	}
-	cur_height = cur_height + (count * 2);
-	return cur_height;
+    for ( i = 0; i < p->max_controls; i++ )
+    {
+        if ( p->controls[i] == NULL )
+            continue;
+        count++;
+        height = p->controls[i]->y + p->controls[i]->height; // Total width is x pos + width of control plus 1 for good measure.
+    //	height = (height * .05) + height;
+        if ( height > cur_height )
+            cur_height = height;
+    }
+    cur_height = cur_height + (count * 2);
+    return cur_height;
 }
 
 
@@ -1915,69 +1916,69 @@ int get_max_control_heigth(NWC_PARENT* p)
  * layouts are, without viewing the windows. Has no real use outside
   * of bookkeeping or showing off to others.
   */
-void collate_windows(void)
+void collate_windows ( void )
 {
-	NWC_PARENT* p;
-	//NWC_CHILD* c;
-	//NWC_CTRL* ctrl;
-	struct collate_window** window_list;
-	struct collate_window* t_win;
-	//struct collate_ctrls t_ctrl;
+    NWC_PARENT *p;
+    //NWC_CHILD* c;
+    //NWC_CTRL* ctrl;
+    struct collate_window **window_list;
+    struct collate_window *t_win;
+    //struct collate_ctrls t_ctrl;
 
-	int pcount = 0, ccount = 0;
-	int i, j = 0;
+    int pcount = 0, ccount = 0;
+    int i, j = 0;
 
-	window_list = (struct collate_window**)malloc(sizeof(struct collate_window*) * (current_parents + 10));
+    window_list = ( struct collate_window ** )malloc ( sizeof ( struct collate_window * ) * (current_parents + 10) );
 
-	t_win = new_collate_window();
+    t_win = new_collate_window ();
 
-	t_win->ctrls = NULL;
-	t_win->ctrl_count = 0;
-	t_win->name = NULL;
-	t_win->ontop = FALSE;
-	t_win->parent = NULL;
-	t_win->x = t_win->y = 0;
+    t_win->ctrls = NULL;
+    t_win->ctrl_count = 0;
+    t_win->name = NULL;
+    t_win->ontop = FALSE;
+    t_win->parent = NULL;
+    t_win->x = t_win->y = 0;
 
-	for (i = 0; i <= max_parents; i++)
-	{
-		// Sort through the parents first. THen we'll go to each child of each parent, then each control of each child.
+    for ( i = 0; i <= max_parents; i++ )
+    {
+        // Sort through the parents first. THen we'll go to each child of each parent, then each control of each child.
 
-		if (parents[i] == NULL)
-			continue;
-		if (!parents[i])
-			continue;
-		p = parents[i]; // We have a parent. Let's collate its info. Using the structure above that we can sort by...stuff.
+        if ( parents[i] == NULL )
+            continue;
+        if ( !parents[i] )
+            continue;
+        p = parents[i]; // We have a parent. Let's collate its info. Using the structure above that we can sort by...stuff.
 
-		window_list[pcount] = t_win;
+        window_list[pcount] = t_win;
 
-		pcount++;
+        pcount++;
 
-		if (pcount > max_parents)
-			break;
+        if ( pcount > max_parents )
+            break;
 
-		window_list[pcount] = NULL;
+        window_list[pcount] = NULL;
 
-		t_win->name = (char*)p->name;
-		t_win->parent = p;
-		t_win->x = p->x;
-		t_win->y = p->y;
-		t_win->ontop = p->on_top;
-		t_win->ctrl_count = p->control_count;
-		if (t_win->ctrls == NULL)
-		{
-			t_win->ctrls = (struct collate_ctrls**)malloc(sizeof(struct collate_ctrls*) * (t_win->ctrl_count + 10));
-			for (j = 0; j < t_win->ctrl_count; j++)
-				t_win->ctrls[j] = NULL;
-		}
+        t_win->name = ( char * )p->name;
+        t_win->parent = p;
+        t_win->x = p->x;
+        t_win->y = p->y;
+        t_win->ontop = p->on_top;
+        t_win->ctrl_count = p->control_count;
+        if ( t_win->ctrls == NULL )
+        {
+            t_win->ctrls = ( struct collate_ctrls ** )malloc ( sizeof ( struct collate_ctrls * ) * (t_win->ctrl_count + 10) );
+            for ( j = 0; j < t_win->ctrl_count; j++ )
+                t_win->ctrls[j] = NULL;
+        }
 
-		//	p->
-	}
+        //	p->
+    }
 }
 
 #define nwc_create_widget() ()
-void* nwc_widget_create_entry(NWC_PARENT* self)
+void *nwc_widget_create_entry ( NWC_PARENT *self )
 {
-	return NULL;
+    return NULL;
 }
 
 /* Take a window group, loop through all the widgets
@@ -1993,113 +1994,113 @@ void* nwc_widget_create_entry(NWC_PARENT* self)
    you're ready for that window to be painted. Really good to call after
    a resize if you need to maintain some pretty-ness*/
 
-void NWC_BoundBox(NWC_PARENT* p, int x, int y)
+void NWC_BoundBox ( NWC_PARENT *p, int x, int y )
 {
-	NWC_WIDGET* w;
-	int i;
-	BOOL move;
+    NWC_WIDGET *w;
+    int i;
+    BOOL move;
 
-	move = FALSE;
+    move = FALSE;
 
-	if (!p)
-		return;
+    if ( !p )
+        return;
 
-	if (p->control_count < 1)
-		return; // Why bother?
+    if ( p->control_count < 1 )
+        return; // Why bother?
 
-	if ((p->width <= x || p->heigth <= y) ||
-		(p->width - x <= 0 || p->heigth - y <= 0) ||
-		((p->x + x) >= p->width || (p->y + y) >= p->heigth))
+    if ( (p->width <= x || p->heigth <= y) ||
+         (p->width - x <= 0 || p->heigth - y <= 0) ||
+         ((p->x + x) >= p->width || (p->y + y) >= p->heigth) )
 
-	{
-		// We have a little issue here.
-		// We've got a weird ass window and some weird ass coords at this point. Nogo.
-		return;
-	}
-	for (i = 0; i < p->control_count; i++)
-	{
-		if (!p->controls[i])
-			break; // Get out.
+    {
+        // We have a little issue here.
+        // We've got a weird ass window and some weird ass coords at this point. Nogo.
+        return;
+    }
+    for ( i = 0; i < p->control_count; i++ )
+    {
+        if ( !p->controls[i] )
+            break; // Get out.
 
-		w = p->controls[i];
+        w = p->controls[i];
 
-		if (!w)
-			break; // Sanity is missing noiw days.
+        if ( !w )
+            break; // Sanity is missing noiw days.
 
-		if (w->x < x)
-		{
-			w->x = x;
-		}
-		//else
-		w->x += x;
+        if ( w->x < x )
+        {
+            w->x = x;
+        }
+        //else
+        w->x += x;
 
-		if (w->y < y)
-		{
-			w->y = y;
-		}
-		//else
-		w->y += y;
+        if ( w->y < y )
+        {
+            w->y = y;
+        }
+        //else
+        w->y += y;
 
-		MoveWindow(w->handle, w->x, w->y, w->width, w->height, TRUE);
-	}
+        MoveWindow ( w->handle, w->x, w->y, w->width, w->height, TRUE );
+    }
 }
 
 
-bool  NWC_Getprinter(NWC_PARENT *p)
+bool  NWC_Getprinter ( NWC_PARENT *p )
 {
-	PRINTDLG pd;
-	PAGESETUPDLG ps;
-	ZeroMemory(&ps, sizeof ps);
+    PRINTDLG pd;
+    PAGESETUPDLG ps;
+    ZeroMemory ( &ps, sizeof ps );
 
 
-	if ( !p )
-		return FALSE;
+    if ( !p )
+        return FALSE;
 
 
-	ps.lStructSize = sizeof ps;
-	ps.Flags = PSD_RETURNDEFAULT;
+    ps.lStructSize = sizeof ps;
+    ps.Flags = PSD_RETURNDEFAULT;
 
-	PageSetupDlg(&ps);
-	//CopyRect(&rcMargin, &ps.rtMargin);
+    PageSetupDlg ( &ps );
+    //CopyRect(&rcMargin, &ps.rtMargin);
 
-	hDevMode = ps.hDevMode;
-	hDevNames = ps.hDevNames;
+    hDevMode = ps.hDevMode;
+    hDevNames = ps.hDevNames;
 
-	
 
-	pd = p->pr;
 
-	pd.lStructSize = sizeof(pd); 
-	pd.hInstance = p->instance;
-	pd.hwndOwner = p->window_control;
-	pd.hDevMode = hDevMode;
-	pd.hDevNames = hDevNames;
-	pd.Flags = PD_ALLPAGES | PD_HIDEPRINTTOFILE | PD_NOPAGENUMS | PD_RETURNDC;
-	pd.nCopies = 1;
-	if ( !PrintDlg(&pd) )
-		return FALSE;
+    pd = p->pr;
 
-	return TRUE;
+    pd.lStructSize = sizeof ( pd );
+    pd.hInstance = p->instance;
+    pd.hwndOwner = p->window_control;
+    pd.hDevMode = hDevMode;
+    pd.hDevNames = hDevNames;
+    pd.Flags = PD_ALLPAGES | PD_HIDEPRINTTOFILE | PD_NOPAGENUMS | PD_RETURNDC;
+    pd.nCopies = 1;
+    if ( !PrintDlg ( &pd ) )
+        return FALSE;
+
+    return TRUE;
 }
 
-COLLATE_WINDOW* new_collate_window(void)
+COLLATE_WINDOW *new_collate_window ( void )
 {
-	COLLATE_WINDOW* cwin;
+    COLLATE_WINDOW *cwin;
 
-	cwin = malloc(sizeof(COLLATE_WINDOW));
-	if (!cwin)
-		exit(1);
+    cwin = malloc ( sizeof ( COLLATE_WINDOW ) );
+    if ( !cwin )
+        exit ( 1 );
 
-	return cwin;
+    return cwin;
 }
 
-COLLATE_CTRLS* new_collate_ctrl(void)
+COLLATE_CTRLS *new_collate_ctrl ( void )
 {
-	COLLATE_CTRLS* ctrl;
+    COLLATE_CTRLS *ctrl;
 
-	ctrl = malloc(sizeof(COLLATE_CTRLS));
-	if (!ctrl)
-		exit(1);
+    ctrl = malloc ( sizeof ( COLLATE_CTRLS ) );
+    if ( !ctrl )
+        exit ( 1 );
 
-	return ctrl;
+    return ctrl;
 }

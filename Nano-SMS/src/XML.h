@@ -51,7 +51,7 @@
 
 
 // !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! 
-./* This "XML" stuff isn't going to be any type of standards compliant
+/* This "XML" stuff isn't going to be any type of standards compliant
     whatsoever. It will mimic XML parsing, and will probably work as
     a parser with some minor modifications; however, this code is meant
     to only work with the XML code outputted by SMSBACKUPRESTART.*/
@@ -74,10 +74,12 @@
 #define MAX_STGRING_LENGTH  1024 * 1024 // 1mb max string length. This is a safeguard, not a hard limit.
 #define MSL MAX_STRING_LENGTH // just an alias.
 
-
+typedef struct xml_node_parent XML_NODE_PARENT;
+typedef struct xml_node_child XML_NODE_CHILD;
+typedef struct xml_node_media XML_NODE_MEDIA;
     // Structs for XML parsing and storage
 
-    struct xml_node_parent {
+struct xml_node_parent {
     char* name; // Name of the node.
     char* value; // Value of the node.
     XML_NODE_PARENT* next; // Next node in the list.
@@ -115,6 +117,3 @@ struct xml_node_media {
     XML_NODE_PARENT* parent;
 };
 
-typedef struct xml_node_parent XML_NODE_PARENT;
-typedef struct xml_node_child XML_NODE_CHILD;
-typedef struct xml_node_media XML_NODE_MEDIA;

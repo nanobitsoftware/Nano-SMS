@@ -48,8 +48,9 @@
 
     // Boiler plate; makes include files easier to manage, and keeps the code cleaner.
 
-#include <Windows.h>
-#include <time.h>
+
+//#include <corecrt.h>
+//#include <stdio.h>
 
 #define WIN32_LEAN_AND_MEAN 
 
@@ -136,7 +137,69 @@ typedef struct mediaitem MEDIA_ITEM;
 
 // STRUCT PROTOYPES END
 
+// ENUMS BEGIN
 
+// Datatypes for sms entities.
+enum sms_data_type
+{
+    SMS_CALL, // A ca;;
+    SMS_MSG,// A text message.
+    SMS_MEDIA  // A media item, such as an image, video, or audio file.
+
+} SMS_DATA_TYPE;
+
+enum sms_media_type
+{
+    SMS_MEDIA_IMAGE, // Image media item.
+    SMS_MEDIA_VIDEO, // Video media item.
+    SMS_MEDIA_AUDIO, // Audio media item.
+    SMS_MEDIA_OTHER // Other media item.
+} SMS_MEDIA_TYPE;
+// Datatypes for call entities.
+enum call_data_type
+{
+    CALL_OUTGOING, // Outgoing call item.
+    CALL_INCOMING, // Incoming call item.
+    CALL_MISSED, // Missed call item.
+    CALL_OTHER // Other call item.
+} CALL_DATA_TYPE;
+// Datatypes for msg entities.
+enum msg_data_type
+{
+    MSG_SENT, // Sent message item.
+    MSG_RECEIVED, // Received message item.
+    MSG_DRAFT, // Draft message item.
+    MSG_DELETED, // Deleted message item.
+    MSG_FAILED, // Failed message item.
+
+    MSG_OTHER // Other message item.
+} MSG_DATA_TYPE;
+
+enum msg_type
+{
+    MSG_TYPE_TEXT, // Text message.
+    MSG_TYPE_IMAGE, // Image message.
+    MSG_TYPE_VIDEO, // Video message.
+    MSG_TYPE_AUDIO, // Audio message.
+    MSG_TYPE_OTHER // Other message type.
+} MSG_TYPE;
+
+enum msg_state
+{
+    MSG_STATE_SENT, // Message has been sent.
+    MSG_STATE_RECEIVED, // Message has been received.
+    MSG_STATE_FAILED, // Message has failed to send.
+    MSG_STATE_DRAFT, // Message is a draft.
+    MSG_STATE_READ, // Message has been read. Comes after 'received' as to not interfer as read > received.
+    MSG_STATE_DELETED // Message has been deleted.
+
+} MSG_STATE;
+
+
+
+// ENUMS END
+// 
+// 
 // DATA STRUCTURES BEGIN
 
 /* SMS Backup and Restore uses a form of XML for its storage of the sms, call and media
@@ -152,10 +215,20 @@ typedef struct mediaitem MEDIA_ITEM;
 struct smsitem
 {
     char* id; // The ID of the SMS item.
+    char* from; // The sender of the SMS item.
     char* address; // The address of the SMS item.
     char* body; // The body of the SMS item.
     time_t date; // The date of the SMS item.
-    int type; // The type of the SMS item (1 for sent, 2 for received).
+    time_t date_sent; // The date the SMS item was sent.
+    time_t date_received; // The date the SMS item was received.
+    int read; // Whether the SMS item has been read (1) or not (0).
+    unsigned int thread_id; // The thread ID of the SMS item.
+    enum MSG_TYPE type;     // The type of the SMS item (text, image, video, audio, other).
+    enum MSG_STATE state;    // The state of the SMS item (sent, received, draft, deleted, failed).
+    enum MSG_DATA_TYPE data_type; // The data type of the SMS item (message, media).
+    MEDIA_ITEM** media; // Pointer to the media item, if any.
+    int media_count; // Count of media items.
+
 };
 
 struct callitem
@@ -163,7 +236,7 @@ struct callitem
     char* id; // The ID of the call item.
     char* address; // The address of the call item.
     time_t date; // The date of the call item.
-    int type; // The type of the call item (1 for outgoing, 2 for incoming, 3 for missed).
+    enum CALL_DATA_TYPE type; // The type of the call item (outgoing, incoming, missed).
 };
 
 
@@ -178,7 +251,7 @@ struct mediaitem
 
 
 struct smsbackup
-{
+{ // Pointers of pointers. Everywhere! Oh my.
     SMS_ITEM* sms_items; // Array of SMS items.
     int sms_count; // Count of SMS items.
     CALL_ITEM* call_items; // Array of call items.
@@ -194,10 +267,10 @@ struct smsbackup
 // PROTOTYPES BEGIN
 void     LOG( char*, ... );
 void write_buffer( const char* );
-int read_string( char, FILE* fp );
+int read_string( char buf[], FILE* fp );
 
 
-/* Prototypes from nano-sms.c*
+/* Prototypes from nano-sms.c*/
 //BEGIN */
 //EMD
 
@@ -229,3 +302,11 @@ char* str_dup1( const char* str, char* file, int line );
 
 
 // PROTOTYPES END
+
+// list of prototypes from memory.c
+void GiveError( char* wrong, BOOL KillProcess );
+
+
+
+
+SMS_BACKUP* XML_new( void );
