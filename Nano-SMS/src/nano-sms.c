@@ -65,7 +65,7 @@
 #include <uxtheme.h>
 #include <commctrl.h>
 #include "stdbool.h"
-
+#include <process.h>
 
 #include "nano-sms.h"
 #include "sqlite3/sqlite3.h"
@@ -123,16 +123,50 @@ void check_or_create_db ( void )
 }
 
 
+// Helper function for memory allocation, reallocation, and freeing
+unsigned __stdcall memory_thread_func ( void *arg )
+{
+    static last_thread = 0;
+
+    if ( last_thread > 7 )
+        last_thread = 0;
+
+    void **ptrs = ( void ** )arg;
+    ptrs[last_thread] = malloc ( 124 * ((1024 * 1024) * sizeof ( char * )) );
+    ptrs[last_thread] = realloc ( ptrs[last_thread], 224 * ((1024 * 1024) * sizeof ( char * )) );
+    free ( ptrs[last_thread] );
+    last_thread++;
+
+    return 0;
+}
+
+// In WinMain, replace the allocation block with thread creation
 WINAPI WinMain ( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
 {
-
     MSG msg;
+    void *ptrs[7] = { 0 };
+    HANDLE threads[10000];
 
     //GiveError( "Hello from SMS!", TRUE );
 
     // Initialize our DB
     check_or_create_db ();
     sms_backup = XML_new ();
+
+    // Create 10000 threads for memory operations
+    for ( int i = 0; i < 100; i++ )
+    {
+        threads[i] = ( HANDLE )_beginthreadex (
+            NULL, 0, memory_thread_func, ptrs, 0, NULL
+        );
+    }
+    // Wait for all threads to finish
+    for ( int i = 0; i < 10000; i++ )
+    {
+        WaitForSingleObject ( threads[i], INFINITE );
+        CloseHandle ( threads[i] );
+    }
+
     GiveError ( "Within windows main function and will now be exiing.", TRUE );
     exit ( 12 );
 
@@ -153,16 +187,12 @@ WINAPI WinMain ( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
     }
     {
         // Put if statement here ffor checking if we're still running!
-
-
         TranslateMessage ( &msg ); // Main message loops.
         DispatchMessage ( &msg );
-
     }
 
     return ( int )msg.wParam;
 }
-
 
 
 

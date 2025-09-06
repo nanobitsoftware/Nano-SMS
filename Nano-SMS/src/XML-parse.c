@@ -67,6 +67,66 @@
 #include "sms_db.h"
 #include "XML.h"
 
+// I know this is a lot of 'global' variables, but this is a simple
+// parser, and I want to keep it simple. So deal with it.
+// None of these will be used outside of this file.
+// They are all static to this file only.
+// I could make this a struct, but that would be more work
+// than it's worth for this simple parser.
+
+static long int xml_line_number = 0; // Keep track of the line number for error reporting.
+static long int xml_char_number = 0; // Keep track of the character number for error reporting.
+static long int xml_nest_number = 0;
+static long int xml_leftparen = 0;
+static long int xml_rightparen = 0;
+static long int xml_lt_number = 0;
+static long int xml_gt_number = 0;
+static long int xml_slash_number = 0;
+static long int xml_bslash_number = 0;
+static long int xml_equal_number = 0;
+static long int xml_quote_number = 0;
+static long int xml_squote_number = 0;
+static long int xml_dquote_number = 0;
+static BOOL xml_in_tag = FALSE;
+static BOOL xml_in_attr = FALSE;
+static BOOL xml_in_value = FALSE;
+static BOOL xml_in_comment = FALSE;
+static BOOL xml_in_cdata = FALSE;
+static BOOL xml_in_declaration = FALSE;
+static BOOL xml_in_doctype = FALSE;
+static BOOL xml_in_entity = FALSE;
+static BOOL xml_in_processing = FALSE;
+static char *xml_current_tag = NULL; // Dynamically allocatted. Grown; never shrunken.
+static int xml_tag_malloc_add = 256 * sizeof ( char ); // Allocate in chunks of 256 bytes. For all buffers.
+static char *xml_attr = NULL; // Dynamically allocatted. Grown; never shrunken.
+static char *xml_value = NULL; // Dynamically allocatted. Grown; never shrunken.
+static char *xml_comment = NULL; // Dynamically allocatted. Grown; never shrunken.
+static char *xml_cdata = NULL; // Dynamically allocatted. Grown; never shrunken.
+static char *xml_declaration = NULL; // Dynamically allocatted. Grown; never shrunken.
+static char *xml_doctype = NULL; // Dynamically allocatted. Grown; never shrunken.
+static char *xml_entity = NULL; // Dynamically allocatted. Grown; never shrunken.
+static char *xml_processing = NULL; // Dynamically allocatted. Grown; never shrunken.
+static char *xml_data = NULL; // The XML data to parse.
+static size_t xml_data_len = 0; // The length of the XML data.
+static size_t xml_data_pos = 0; // The current position in the XML data.
+static size_t xml_tag_len = 0;  // Length of tag buffer.
+static size_t xml_attr_len = 0; // Length of attr buffer.
+static size_t xml_value_len = 0; // Length of value buffer.
+static size_t xml_comment_len = 0; // Length of comment buffer.
+static size_t xml_cdata_len = 0; // Length of cdata buffer.
+static size_t xml_declaration_len = 0; // Length of declaration buffer.
+static size_t xml_doctype_len = 0; // Length of doctype buffer.
+static size_t xml_entity_len = 0; // Length of entity buffer.
+static size_t xml_processing_len = 0; // Length of processing buffer.
+
+
+
+
+/* This does **NOT** create a fully compliant XML parrser. It may work for some stuff
+    with tweaks, but it is designed first and foremost as a parse for SMS Backup and Restore
+    version of xml. Meaning it's designed only to read their files.
+    */
+
 /*////////////SMS XML
  <smses count="#" backup_set="<smsbackup Guid" backup_date="#" type="<full>">
  sms: <sms protocol="0" address="#" date="#" type="#" subject="<token>?" body='<sms body>' toa="null" sc_toa="null" service_center="<sms center>" read="#" status="-#" locked="#" date_sent="#" sub_id="#" readable_date="<date>" contact_name="<name of sender>" />
@@ -122,9 +182,9 @@
     * @param backup: pointer to the SMS_BACKUP structure to populate
     * @return: 1 on success, -1 on failure
     */
-SMS_BACKUP * XML_new (void)
+SMS_BACKUP *XML_new ( void )
 {
-    SMS_BACKUP *backup = (SMS_BACKUP *)malloc ( sizeof ( SMS_BACKUP ) );
+    SMS_BACKUP *backup = ( SMS_BACKUP * )malloc ( sizeof ( SMS_BACKUP ) );
     if ( !backup )
     {
         fprintf ( stderr, "Failed to allocate memory for SMS_BACKUP structure\n" );
@@ -134,26 +194,50 @@ SMS_BACKUP * XML_new (void)
     return backup;
 }
 
-int XML_free (SMS_BACKUP *backup)
+/* Function to grow the XML buffer
+ * @param buffer: pointer to the buffer to grow
+ * @param current_len: pointer to the current length of the buffer
+ * @return: pointer to the grown buffer, or NULL on failure
+ */
+char *xml_grow_buffer ( char **buffer, size_t *current_len )
 {
-    if (backup)
+    if ( !buffer || !current_len ) return NULL;
+    size_t new_len = *current_len + xml_tag_malloc_add;
+    char *new_buffer = ( char * )realloc ( *buffer, new_len );
+    if ( !new_buffer )
     {
-        if (backup->sms_items)
+        fprintf ( stderr, "Failed to allocate memory for XML buffer\n" );
+        return NULL;
+    }
+    *buffer = new_buffer;
+    memset ( *buffer + *current_len, 0, xml_tag_malloc_add ); // Zero out the new memory.
+    *current_len = new_len;
+    return *buffer;
+}
+
+/* Function to free the memory allocated for the SMS_BACKUP structure
+ * @param backup: pointer to the SMS_BACKUP structure to free
+ */
+int XML_free ( SMS_BACKUP *backup )
+{
+    if ( backup )
+    {
+        if ( backup->sms_items )
         {
-            free(backup->sms_items);
+            free ( backup->sms_items );
             backup->sms_items = NULL;
         }
-        if (backup->call_items)
+        if ( backup->call_items )
         {
-            free(backup->call_items);
+            free ( backup->call_items );
             backup->call_items = NULL;
         }
-        if (backup->media_items)
+        if ( backup->media_items )
         {
-            free(backup->media_items);
+            free ( backup->media_items );
             backup->media_items = NULL;
         }
-        free(backup);
+        free ( backup );
     }
     return 1;
 }

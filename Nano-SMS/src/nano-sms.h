@@ -96,12 +96,10 @@ HINSTANCE g_hInst; // Global instance handle for the application.
 
 char ERROR_STRING[1024]; // Global error string for the application. Used to store error messages.
 
-#define  APP_NAME  "Nano-SMS" // The name of the application.
-#define  APP_VERSION  "0.1.0" // The version of the application.
-#define  APP_AUTHOR  "Bi0teQ @ NanobitSoftware." // The author of the application.
-#define  APP_LICENSE  "GPLv3" // The license of the application.
-
-
+#define  APP_NAME  "Nano-SMS" 
+#define  APP_VERSION  "0.1.0" 
+#define  APP_AUTHOR  "Bi0teQ @ NanobitSoftware."
+#define  APP_LICENSE  "GPLv3" 
 
 
 
