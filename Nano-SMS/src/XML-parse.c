@@ -66,6 +66,8 @@
 #include "NWC.h"
 #include "sms_db.h"
 #include "XML.h"
+#include "io.h"
+
 
 // I know this is a lot of 'global' variables, but this is a simple
 // parser, and I want to keep it simple. So deal with it.
@@ -73,6 +75,9 @@
 // They are all static to this file only.
 // I could make this a struct, but that would be more work
 // than it's worth for this simple parser.
+
+FILESTREAM *xml_stream = NULL; // The file stream to read the XML data from.
+
 
 static long int xml_line_number = 0; // Keep track of the line number for error reporting.
 static long int xml_char_number = 0; // Keep track of the character number for error reporting.

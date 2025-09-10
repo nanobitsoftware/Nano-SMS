@@ -186,9 +186,8 @@ void add_heap ( HEAP *hp )
     HEAP_UNLOCK ();
     return;
 }
+/*
 
-#define BIO_SOURCE 0
-#ifndef BIO_SOURCE
 
 void show_heap ( void )
 {
@@ -214,7 +213,7 @@ void show_heap ( void )
     dheap[0] = '\0';
     HEAP_LOCK ();
     last = lastheap;
-    nasty = TRUE;
+    
     for ( i = 0, hp = firstheap; hp != last; hp = hp->next, i++ )
     {
         if ( hp->chunk == NULL )
@@ -265,7 +264,7 @@ void show_heap ( void )
     update_term ();
     HEAP_UNLOCK ();
 }
-#endif
+*/
 
 void walk_heap ( void )
 {

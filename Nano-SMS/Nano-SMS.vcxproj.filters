@@ -65,6 +65,9 @@
     <ClInclude Include="src\XML.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\io.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md">

@@ -124,15 +124,28 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <RemoveUnreferencedCodeData>true</RemoveUnreferencedCodeData>
       <UseFullPaths>false</UseFullPaths>
+      <CompileAsManaged>false</CompileAsManaged>
+      <CompileAsWinRT>false</CompileAsWinRT>
+      <ControlFlowGuard>false</ControlFlowGuard>
+      <CreateHotpatchableImage>false</CreateHotpatchableImage>
+      <PrecompiledHeaderFile />
+      <ShowIncludes>false</ShowIncludes>
+      <ExpandAttributedSource>true</ExpandAttributedSource>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MinimalRebuild>false</MinimalRebuild>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+      <UACUIAccess>false</UACUIAccess>
+      <EnableUAC>false</EnableUAC>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -176,6 +189,7 @@
     <ClCompile Include="src\XML-snarf.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\io.h" />
     <ClInclude Include="src\nano-sms.h" />
     <ClInclude Include="src\NWC.h" />
     <ClInclude Include="src\sms_db.h" />

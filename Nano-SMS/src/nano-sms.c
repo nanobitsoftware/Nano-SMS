@@ -71,7 +71,7 @@
 #include "sqlite3/sqlite3.h"
 #include "NWC.h"
 #include "sms_db.h"
-
+#include "io.h"
 
 
 
@@ -190,6 +190,9 @@ WINAPI WinMain ( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
         TranslateMessage ( &msg ); // Main message loops.
         DispatchMessage ( &msg );
     }
+
+    unregister_all_stream ( ); // Clear all streams in case we have some.
+
 
     return ( int )msg.wParam;
 }

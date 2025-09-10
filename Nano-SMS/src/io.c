@@ -1,20 +1,4 @@
-/* Nano-SMS: My interpretation and creation of an app to read SMS BACKUP AND RESTORE files.
-   All other apps I have used, have been web based, and cannot process large files well, if at
-   at all (All my tests have resulted in crashes. Even though I have 96gB of memory avail)
-
-   This program is obviously windows based. I plan, if it works, is to make a linux/mac
-   version that is command line based, that will spit out the items you're looking for into
-   an html file, splitting to keep size issues from cropping up. THat is for another day,
-   and may even be put into this program as well as cross platform.
-
-
-    This program is not meant to be a full replacement for the SMS Backup and Restore app.
-    It is meant to be a tool to read the files, and extract the data you want, and then
-    save it to a file, or copy it to the clipboard, or whatever you want to do with it.
-
-    I do not maintain. nor do I claim to maintain, the SMS Backup and Restore app.
-    This program is not affiliated with the SMS Backup and Restore app in any way.
-    It is simply a tool to read the files created by the SMS Backup and Restore app.
+/* Nanobit Software's io.c - IO library for personal projects.
 
     This program is open source, and you are free to use it, modify it, and distribute it
     as you see fit, as long as you keep the original copyright and license information intact.
@@ -44,3 +28,176 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     */
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <windows.h>
+#include <math.h>
+
+#include "io.h"
+
+
+// We keep this struct to this scope so it cannot be used elsewhere.
+// This is basically a private data struct.
+struct
+{
+    FILESTREAM **streams; // Array of pointers to FILESTREAM structures.
+    size_t count;         // Number of registered streams.
+    size_t capacity;      // Capacity of the streams array.
+} _fs_registry = { NULL, 0, 0 };
+
+/* Function to register a file stream 
+*  IMPORTANT - This function does not check for duplicates.
+* IMPORTANT - YOU MUST CHECK THE RETURN VALUE!
+*/
+BOOL _register_fs_handle ( FILESTREAM *fs )
+{
+    if ( _fs_registry.count >= _fs_registry.capacity )
+    {
+        size_t new_capacity = ( _fs_registry.capacity == 0 ) ? 4 : _fs_registry.capacity * 2;
+        FILESTREAM **new_streams = ( FILESTREAM ** ) realloc ( _fs_registry.streams, new_capacity * sizeof ( FILESTREAM * ) );
+        
+        if ( new_streams == NULL )
+        {
+            // This is a major problem.
+            return FALSE; // Memory allocation failed.
+        }
+
+        _fs_registry.streams = new_streams;
+        _fs_registry.capacity = new_capacity;
+    }
+
+    _fs_registry.streams[_fs_registry.count++] = fs;
+    return TRUE;
+
+}
+/* Function to unregister a file stream 
+* IMPORTANT - This function does not free the stream.
+* IMPORTANT - YOU MUST CHECK THE RETURN VALUE!
+*/
+BOOL _unregister_fs_handle ( FILESTREAM *fs )
+{
+    for ( size_t i = 0; i < _fs_registry.count; i++ )
+    {
+        if ( _fs_registry.streams[i] == fs )
+        {
+            // Found the stream, remove it by shifting the rest down.
+            memmove ( &_fs_registry.streams[i], &_fs_registry.streams[i + 1], ( _fs_registry.count - i - 1 ) * sizeof ( FILESTREAM * ) );
+            _fs_registry.count--;
+            return TRUE;
+        }
+    }
+    
+    return FALSE; // Stream not found.
+}
+
+/* This function is more of a cleanup for in case someone didn't
+    clear their streams properly. It is a public function.
+    */
+BOOL unregister_all_streams ( void )
+{
+    BOOL all_unregistered = TRUE;
+
+    if (_fs_registry.streams == NULL || _fs_registry.count == 0 )
+    {
+        return TRUE; // Nothing to unregister.
+    }
+
+    for ( size_t i = 0; i < _fs_registry.count; i++ )
+    {
+        if ( !_unregister_fs_handle ( _fs_registry.streams[i] ) )
+        {
+            all_unregistered = FALSE;
+        }
+    }
+    
+    free ( _fs_registry.streams );
+    _fs_registry.streams = NULL;
+    _fs_registry.count = 0;
+    _fs_registry.capacity = 0;
+    
+    // Do we have some still registered for some reason? Maybe we should take a look
+    if (!all_unregistered)
+    {
+        LOG ( "Warning: Some file streams were not unregistered properly. Possible memory leak." );
+    }
+
+    return all_unregistered;
+}
+
+
+FILESTREAM *_new_fs_stream ( int line, char * file)
+{
+    FILESTREAM *fs = ( FILESTREAM * ) malloc ( sizeof ( FILESTREAM ) );
+    
+    if ( fs == NULL )
+    {
+        return NULL;
+    }
+    
+    fs->buffer = ( char * ) malloc ( BUFFER_INIT );
+    
+    if ( fs->buffer == NULL )
+    {
+        free ( fs );
+        return NULL;
+    }
+    
+    fs->size = BUFFER_INIT;
+    fs->length = 0;
+    fs->pos = 0;
+    fs->file_read = 0;
+    fs->file_size = 0;
+    fs->seek_pos = 0;
+    fs->opened = 0;
+    fs->modified = 0;
+    fs->accessed = 0;
+    fs->file = NULL;
+    fs->last_token = 0;
+    fs->cur_token = 0;
+    fs->last_error = 0;
+    fs->state = STATE_READY;
+    fs->mode = MODE_NONE;
+    fs->eof = FALSE;
+    fs->is_open = FALSE;
+    memset ( fs->file_path, 0, sizeof ( fs->file_path ) );
+    memset ( fs->file_name, 0, sizeof ( fs->file_name ) );
+    if ( _register_fs_handle ( fs ) == FALSE )
+    {
+        LOG ( "Unable to register a new file stream within the system. Bailing: %s / %d", file, line );
+
+        free ( fs->buffer );
+        free ( fs );
+        return NULL;
+     }
+    return fs;
+}
+
+/* Function to free a file stream */
+BOOL _free_fs_stream(FILESTREAM *fs, int line, char *file)
+{
+    if ( fs == NULL )
+    {
+        return FALSE;
+    }
+    
+    if ( fs->is_open )
+    {
+        // If the stream is still open, close it first.
+        fclose ( fs->file );
+        fs->is_open = FALSE;
+    }
+    
+    free ( fs->buffer );
+    
+    if ( !_unregister_fs_handle ( fs ) )
+    {
+        LOG ( "Unable to unregister file stream within the system. Possible memory leak: %s / %d", file, line );
+        // We continue to free the memory even if unregistering fails.
+    }
+    
+    free ( fs );
+    return TRUE;
+}
