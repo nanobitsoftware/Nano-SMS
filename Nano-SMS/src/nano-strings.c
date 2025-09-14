@@ -629,19 +629,6 @@ void write_buffer ( const char *str )
     fprintf ( fp, "%s\n", str );
     fclose ( fp );
 }
-void LOG ( char *fmt, ... )
-{
-
-    char buf[15000];
-    va_list args;
-    va_start ( args, fmt );
-    vsprintf ( buf, fmt, args );
-    va_end ( args );
-    write_buffer ( buf );
-
-
-
-}
 
 
 

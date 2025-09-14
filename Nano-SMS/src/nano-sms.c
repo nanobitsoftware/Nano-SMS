@@ -67,11 +67,14 @@
 #include "stdbool.h"
 #include <process.h>
 
+
+
 #include "nano-sms.h"
+#include "nano-io.h"
 #include "sqlite3/sqlite3.h"
 #include "NWC.h"
 #include "sms_db.h"
-#include "io.h"
+
 
 
 
@@ -87,6 +90,21 @@ SMS_BACKUP *sms_backup = NULL; // The SMS backup structure. Global entity.
 //  Function to check or create the database.
 //  This function will be called at the start of the program to ensure that the database exists
 //  and that the necessary tables are created.
+
+
+void LOG ( char *fmt, ... )
+{
+
+    char buf[ 15000 ];
+    va_list args;
+    va_start ( args, fmt );
+    vsprintf ( buf, fmt, args );
+    va_end ( args );
+    write_buffer ( buf );
+
+
+
+}
 
 void check_or_create_db ( void )
 {
@@ -123,22 +141,7 @@ void check_or_create_db ( void )
 }
 
 
-// Helper function for memory allocation, reallocation, and freeing
-unsigned __stdcall memory_thread_func ( void *arg )
-{
-    static last_thread = 0;
 
-    if ( last_thread > 7 )
-        last_thread = 0;
-
-    void **ptrs = ( void ** )arg;
-    ptrs[last_thread] = malloc ( 124 * ((1024 * 1024) * sizeof ( char * )) );
-    ptrs[last_thread] = realloc ( ptrs[last_thread], 224 * ((1024 * 1024) * sizeof ( char * )) );
-    free ( ptrs[last_thread] );
-    last_thread++;
-
-    return 0;
-}
 
 // In WinMain, replace the allocation block with thread creation
 WINAPI WinMain ( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
@@ -146,26 +149,26 @@ WINAPI WinMain ( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
     MSG msg;
     void *ptrs[7] = { 0 };
     HANDLE threads[10000];
+    unsigned long long int start;
+    unsigned long long int stop;
+    FILESTREAM *fs;
+    char buf[ 1024 ];
 
     //GiveError( "Hello from SMS!", TRUE );
-
+     
     // Initialize our DB
     check_or_create_db ();
     sms_backup = XML_new ();
+    fs = fs_open ( NULL, "c:/nanobit/sms-20240607163630.xml", "r" );
+    if ( fs )
+    {
+        logfs ( fs );
+        sprintf ( buf, "Size of file: %lu mB", (unsigned long int )fs->file_size /1024/1024/1024   );
 
-    // Create 10000 threads for memory operations
-    for ( int i = 0; i < 100; i++ )
-    {
-        threads[i] = ( HANDLE )_beginthreadex (
-            NULL, 0, memory_thread_func, ptrs, 0, NULL
-        );
+        GiveError ( buf, TRUE );
+        
     }
-    // Wait for all threads to finish
-    for ( int i = 0; i < 10000; i++ )
-    {
-        WaitForSingleObject ( threads[i], INFINITE );
-        CloseHandle ( threads[i] );
-    }
+
 
     GiveError ( "Within windows main function and will now be exiing.", TRUE );
     exit ( 12 );
@@ -191,7 +194,7 @@ WINAPI WinMain ( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
         DispatchMessage ( &msg );
     }
 
-    unregister_all_stream ( ); // Clear all streams in case we have some.
+    unregister_all_streams ( ); // Clear all streams in case we have some.
 
 
     return ( int )msg.wParam;
@@ -853,3 +856,13 @@ void GiveError ( char *wrong, BOOL KillProcess )
         return;
     }
 }
+
+
+                 
+    
+
+    
+
+
+
+

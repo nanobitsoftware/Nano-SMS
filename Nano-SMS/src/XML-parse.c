@@ -66,7 +66,7 @@
 #include "NWC.h"
 #include "sms_db.h"
 #include "XML.h"
-#include "io.h"
+#include "nano-io.h"
 
 
 // I know this is a lot of 'global' variables, but this is a simple
@@ -101,16 +101,16 @@ static BOOL xml_in_declaration = FALSE;
 static BOOL xml_in_doctype = FALSE;
 static BOOL xml_in_entity = FALSE;
 static BOOL xml_in_processing = FALSE;
-static char *xml_current_tag = NULL; // Dynamically allocatted. Grown; never shrunken.
+static char *xml_current_tag = NULL; // Dynamically allocated. Grown; never shrunken.
 static int xml_tag_malloc_add = 256 * sizeof ( char ); // Allocate in chunks of 256 bytes. For all buffers.
-static char *xml_attr = NULL; // Dynamically allocatted. Grown; never shrunken.
-static char *xml_value = NULL; // Dynamically allocatted. Grown; never shrunken.
-static char *xml_comment = NULL; // Dynamically allocatted. Grown; never shrunken.
-static char *xml_cdata = NULL; // Dynamically allocatted. Grown; never shrunken.
-static char *xml_declaration = NULL; // Dynamically allocatted. Grown; never shrunken.
-static char *xml_doctype = NULL; // Dynamically allocatted. Grown; never shrunken.
-static char *xml_entity = NULL; // Dynamically allocatted. Grown; never shrunken.
-static char *xml_processing = NULL; // Dynamically allocatted. Grown; never shrunken.
+static char *xml_attr = NULL; // Dynamically allocated. Grown; never shrunken.
+static char *xml_value = NULL; // Dynamically allocated. Grown; never shrunken.
+static char *xml_comment = NULL; // Dynamically allocated. Grown; never shrunken.
+static char *xml_cdata = NULL; // Dynamically allocated. Grown; never shrunken.
+static char *xml_declaration = NULL; // Dynamically allocated. Grown; never shrunken.
+static char *xml_doctype = NULL; // Dynamically allocated. Grown; never shrunken.
+static char *xml_entity = NULL; // Dynamically allocated. Grown; never shrunken.
+static char *xml_processing = NULL; // Dynamically allocated. Grown; never shrunken.
 static char *xml_data = NULL; // The XML data to parse.
 static size_t xml_data_len = 0; // The length of the XML data.
 static size_t xml_data_pos = 0; // The current position in the XML data.
@@ -127,7 +127,7 @@ static size_t xml_processing_len = 0; // Length of processing buffer.
 
 
 
-/* This does **NOT** create a fully compliant XML parrser. It may work for some stuff
+/* This does **NOT** create a fully compliant XML parser. It may work for some stuff
     with tweaks, but it is designed first and foremost as a parse for SMS Backup and Restore
     version of xml. Meaning it's designed only to read their files.
     */

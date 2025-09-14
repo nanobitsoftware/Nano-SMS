@@ -88,6 +88,7 @@ static void init_heap_cs ( void )
     }
 }
 
+#define MULTITHREADED 1
 // Helper to enter/leave critical section
 #ifdef MULTITHREADED
 #define HEAP_LOCK()   do { init_heap_cs(); EnterCriticalSection(&heap_cs); } while(0)

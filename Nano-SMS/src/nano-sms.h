@@ -263,7 +263,7 @@ struct smsbackup
 // DATA STRUCTURES END
 
 // PROTOTYPES BEGIN
-void     LOG( char*, ... );
+void     LOG( char*, ... ); // Externed from io.c
 void write_buffer( const char* );
 int read_string( char buf[], FILE* fp );
 

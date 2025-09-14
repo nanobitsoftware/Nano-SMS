@@ -46,7 +46,7 @@
     */
 #pragma once
 
-#include <stdio.h>
+
 
 
 
@@ -62,7 +62,7 @@
 // using as much as we can get away with to stream properly.
 #define STREAM_SCRATCH (8192) // 8kB scratch buffer for reading.
 
-char stream_scratch[STREAM_SCRATCH] = "\0"; // The scratch buffer for reading.
+
 
 typedef struct filestream FILESTREAM;
 
@@ -144,8 +144,12 @@ struct filestream
 
 // Public facing functions
 BOOL unregister_all_streams( void );
-
-
-
-
-
+FILESTREAM* _fs_find_handle( char* path );
+BOOL _register_fs_handle( FILESTREAM* fs );
+BOOL _unregister_fs_handle( FILESTREAM* fs );
+FILESTREAM* _new_fs_stream( int line, char* file );
+BOOL _free_fs_stream( FILESTREAM* fs, int line, char* file );
+void logfs( FILESTREAM* fs );
+FILESTREAM* fs_open( FILESTREAM* fs, const char* path, const char* mode );
+BOOL fs_close( FILESTREAM* fs, BOOL cleanup );
+void LOG( char* fmt, ... );

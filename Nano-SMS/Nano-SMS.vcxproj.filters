@@ -27,7 +27,7 @@
     <ClCompile Include="src\sqlite3\sqlite3.c">
       <Filter>Sqlite3</Filter>
     </ClCompile>
-    <ClCompile Include="src\strings.c">
+    <ClCompile Include="src\nano-strings.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\memory.c">
@@ -45,7 +45,7 @@
     <ClCompile Include="src\DB.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\io.c">
+    <ClCompile Include="src\nano-io.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -65,7 +65,7 @@
     <ClInclude Include="src\XML.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\io.h">
+    <ClInclude Include="src\nano-io.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
