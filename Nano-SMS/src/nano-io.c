@@ -261,6 +261,11 @@ FILESTREAM * fs_open ( FILESTREAM *fs, const char *path, const char *mode )
 {
     FILESTREAM *fsnew = NULL;
 
+
+
+
+
+
     if ( fs == NULL )
     {
         // If sent a NULL, let's make one and register it for the user.
@@ -292,7 +297,7 @@ FILESTREAM * fs_open ( FILESTREAM *fs, const char *path, const char *mode )
         fs->is_open = FALSE;
     }
 
-    fs->file = fopen ( path, "rb" );
+    fs->file = fopen ( path, mode );
 
     if ( fs->file == NULL )
     {
@@ -310,15 +315,17 @@ FILESTREAM * fs_open ( FILESTREAM *fs, const char *path, const char *mode )
         return NULL;
     }
 
+
     // Get the file size
-    //fseeko ( fs->file, 0, SEEK_END );
-    fs->file_size = ftell ( fs->file );
-    //fseeko     ( fs->file, 0, SEEK_SET );
-    _filelength64 ( fs );
+    _fseeki64 ( fs->file, 0, SEEK_END );
+    fs->file_size = _ftelli64 ( fs->file );
+    _fseeki64     ( fs->file, 0, SEEK_SET );
+    
 
 
     // Update the file path and name
     strncpy ( fs->file_path, path, sizeof ( fs->file_path ) - 1 );
+  
     const char *slash = strrchr ( path, '\\' );
     if ( slash )
     {
@@ -444,27 +451,27 @@ void logfs ( FILESTREAM *fs )
               "File Path:    %s\n"
                      "File Name:    %s\n"
             
-                     "File Length:  %lu\n"
-                     "Pos:          %lu\n"
-                     "Bytes Read:   %lu\n"
-                     "File Size:    %lu bytes\n"
-                     "Seek Position %lu\n"
+                     "Buffer Length:%zu\n"
+                     "Pos:          %zu\n"
+                     "Bytes Read:   %zu\n"
+                     "File Size:    %zu mb\n"
+                     "Seek Position %zu\n"
                      "Opened:       %s\n"
                      "Modified:     %s\n"
-                     "Accessed:     %lu\n"
+                     "Accessed:     %zu\n"
                      "File pointer: %p\n"
                      "Eof:          %s\n",
               fs->file_path,
               fs->file_name,
               
-              ( unsigned long )fs->length,
-              (unsigned long) fs->pos,
-              (unsigned long) fs->file_read,
-              (unsigned long)fs->file_size, 
-              (unsigned long) fs->seek_pos,
+              fs->length,
+              fs->pos,
+              fs->file_read,
+              fs->file_size / 1024 / 1024  ,
+              fs->seek_pos,
               fs->is_open ? "TRUE" : "FALSE",
               fs->modified ? "TRUE" : "FALSE",
-              ( unsigned long )fs->accessed,
+              fs->accessed,
               fs->file,
               fs->eof ? "TRUE" : "FALSE"
     );

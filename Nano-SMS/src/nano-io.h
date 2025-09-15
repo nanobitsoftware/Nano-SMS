@@ -101,8 +101,8 @@ struct filestream
 {
     
     char* buffer;        // The buffer to hold the file data.
-    char file_path[1024];// The path to the file. 256 is stock, but what if large is enabled?
-    char file_name[256]; // The name of the file.
+    char file_path[_MAX_PATH];// The path to the file. 256 is stock, but what if large is enabled?
+    char file_name[_MAX_FNAME]; // The name of the file.
     size_t size;         // The size of the buffer.
     size_t length;       // The length of the data in the buffer.
     size_t pos;          // The current position in the buffer.

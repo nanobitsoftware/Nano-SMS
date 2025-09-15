@@ -126,7 +126,6 @@ static size_t xml_processing_len = 0; // Length of processing buffer.
 
 
 
-
 /* This does **NOT** create a fully compliant XML parser. It may work for some stuff
     with tweaks, but it is designed first and foremost as a parse for SMS Backup and Restore
     version of xml. Meaning it's designed only to read their files.

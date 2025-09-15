@@ -148,9 +148,9 @@ WINAPI WinMain ( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
 {
     MSG msg;
     void *ptrs[7] = { 0 };
-    HANDLE threads[10000];
-    unsigned long long int start;
-    unsigned long long int stop;
+//  HANDLE threads[10000];
+//  unsigned long long int start;
+//  unsigned long long int stop;
     FILESTREAM *fs;
     char buf[ 1024 ];
 
@@ -159,11 +159,11 @@ WINAPI WinMain ( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
     // Initialize our DB
     check_or_create_db ();
     sms_backup = XML_new ();
-    fs = fs_open ( NULL, "c:/nanobit/sms-20240607163630.xml", "r" );
+    fs = fs_open ( NULL, "c:\\nanobit\\sms-20240607163630.xml", "rb" );
     if ( fs )
     {
         logfs ( fs );
-        sprintf ( buf, "Size of file: %lu mB", (unsigned long int )fs->file_size /1024/1024/1024   );
+        sprintf ( buf, "Size of file: %zu mB", fs->file_size /1024/1024/1024   );
 
         GiveError ( buf, TRUE );
         
