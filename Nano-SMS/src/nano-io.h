@@ -45,8 +45,9 @@
 
     */
 #pragma once
-
-
+#include <stdio.h>
+#include <stdlib.h>
+#define BOOL int
 
 
 
@@ -57,6 +58,8 @@
 #define STREAM_EOF (-1) // End of file indicator.
 #define STREAM_ERROR (-2) // Error indicator.
 #define STREAM_UNKNOWN (-3) // Unknown error indicator.
+#define MEMORY_ERROR (-4) // Memory error indicator.
+
 // we're going to have a 'scratch' buffer so we're not using too much
 // stack space. Trying to be cautious of memory use, but also
 // using as much as we can get away with to stream properly.
@@ -93,53 +96,104 @@ typedef struct filestream FILESTREAM;
 #define free_fs_stream(x) _free_fs_stream(x, __LINE__, __FILE__)
 
 
+
+
+enum token_type
+{
+    TOKEN_NONE,
+    TOKEN_OPEN_LT, /* Less-than < */
+    TOKEN_CLOSE_GT, /* Greater-than > */
+    TOKEN_OPEN_BK, /* Brackets {}*/
+    TOKEN_CLOSE_BK, /* Brackets {}*/
+    TOKEN_OPEN_PR, /* Parenthesis ()*/
+    TOKEN_CLOSE_PR, /* Parenthesis ()*/
+    TOKEN_OPEN_SQBK, /* Square brackets []*/
+    TOKEN_CLOSE_SQBK, /* Square brackets []*/
+    TOKEN_QUEST, /* Question mark ? */
+    TOKEN_EXCLAMATION, /* Exclamation ! */
+    TOKEN_COLON, /* Colon : */
+    TOKEN_SEMI, /* Semicolon ; */
+    TOKEN_COMMA, /* Comma , */
+    TOKEN_DOT, /* Dot . */
+    TOKEN_PIPE, /* Pipe | */
+    TOKEN_AMPERSAND, /* Ampersand & */
+    TOKEN_HASH, /* Hash # */
+    TOKEN_DOLLAR, /* Dollar sign $ */
+    TOKEN_PERCENT, /* Percent % */
+    TOKEN_CARET, /* Caret ^ */
+    TOKEN_TILDE, /* Tilde ~ */
+    TOKEN_BACK_TICK, /* Backtick ` */
+    TOKEN_SQUOTE, /* Single quote ' */
+    TOKEN_QUOTE, /* Double quote " */
+    TOKEN_BACKSLASH, /* Backslash \ */
+    TOKEN_EQUALS, /* Equals = */
+    TOKEN_DASH, /* Dash - */
+    TOKEN_PLUS, /* Plus + */
+    TOKEN_FSLASH, /* Forward slash / */
+    TOKEN_STRING, /* String, value, variable, etc; not literal */
+    TOKEN_NUMBER, /* Number */
+    TOKEN_LITERAL, /* String Literal: aka: 'string' or "string" */
+    TOKEN_NULL /* Null */
+};
+
+
+
 // Data structures below are for our own special file streaming for
 // our xml (or anything else) parsing. We are diferent than other SMS 
-// readers,because all of them break on big files. Ours will read them.
+// readers,because all of them break on big files. Ours will read them
+// and potentially stream them from disk, if ram is an issue. My personal
+// file is 18GB in size.
 
 struct filestream
 {
-    
-    char* buffer;        // The buffer to hold the file data.
-    char file_path[_MAX_PATH];// The path to the file. 256 is stock, but what if large is enabled?
-    char file_name[_MAX_FNAME]; // The name of the file.
-    size_t size;         // The size of the buffer.
-    size_t length;       // The length of the data in the buffer.
-    size_t pos;          // The current position in the buffer.
-    size_t file_read;    // The number of bytes read from the file.
-    size_t file_size;    // The size of the file.
-    size_t seek_pos;     // The position that has been seeked to.
-    time_t opened;       // The time the file was opened.
-    time_t modified;     // The time the file was last modified.
-    time_t accessed;     // The time the file was last accessed.
-    FILE *file;          // The file pointer.
-    int last_token;      // The last token read from the file.
-    int cur_token;       // The current token being processed.
-    int last_error;      // Error flag.
+    char* buffer;        // The buffer to hold the file data. Allocated dynamically, used for streaming file contents.
+    char file_path[_MAX_PATH]; // The path to the file. Stores the full path for reference and operations.
+    char file_name[_MAX_FNAME]; // The name of the file. Used for display/logging and file management.
+    size_t size;         // The size of the buffer. Indicates the total allocated memory for 'buffer'.
+    size_t length;       // The length of the data in the buffer. Actual data size currently held.
+    size_t pos;          // The current position in the buffer. Used for reading/writing operations.
+    size_t file_read;    // The number of bytes read from the file. Useful for progress tracking.
+    size_t file_size;    // The size of the file. Used for validation and progress indication.
+    double hr_size;      // The human readable size of the file. Used for display purposes.
+    size_t seek_pos;     // The position that has been seeked to. Used for random access within the file.
+    time_t opened;       // The time the file was opened. For logging and auditing purposes.
+    time_t modified;     // The time the file was last modified. Useful for file change detection.
+    time_t accessed;     // The time the file was last accessed. For tracking usage and access patterns.
+    FILE *file;          // The file pointer. Standard C FILE* used for file I/O operations.
+    int last_token;      // The last token read from the file. Used in parsing routines.
+    int cur_token;       // The current token being processed. For stateful parsing.
+    int last_error;      // Error flag. Stores the last error code encountered.
+    size_t total_lines;     // Internal number just for ease of parsing.
     enum {
-        STATE_READY,
-        STATE_ANALYZE,
-        STATE_OPEN,
-        STATE_READING,
-        STATE_WRITING,
-        STATE_CLOSING,
-        STATE_ERRORS,
-        STATE_SEEKING
-    } state;             // The current state of the stream.
+        STATE_READY,     // Stream is ready for operations.
+        STATE_ANALYZE,   // Stream is being analyzed (e.g., format detection).
+        STATE_OPEN,      // Stream is open.
+        STATE_READING,   // Stream is currently reading.
+        STATE_WRITING,   // Stream is currently writing.
+        STATE_CLOSING,   // Stream is closing.
+        STATE_ERRORS,    // Stream is in error state.
+        STATE_SEEKING    // Stream is seeking to a position.
+    } state;             // The current state of the stream. Used for managing stream lifecycle.
     enum 
     {
-
-        MODE_READ,
-        MODE_WRITE,
-        MODE_APPEND,
-        MODE_READWRITE,
-        MODE_BINARY,
-        MODE_ERRORS,
-        MODE_NONE
-
-    } mode;              // The mode the file was opened in.
-    BOOL eof;            // End of file flag.
-    BOOL is_open;        // File open flag.
+        MODE_READ,       // File opened for reading.
+        MODE_WRITE,      // File opened for writing.
+        MODE_APPEND,     // File opened for appending.
+        MODE_READWRITE,  // File opened for both reading and writing.
+        MODE_BINARY,     // File opened in binary mode.
+        MODE_ERRORS,     // Error mode.
+        MODE_NONE        // No mode set.
+    } mode;              // The mode the file was opened in. Used for access control.
+    enum 
+    {
+        TYPE_BYTE,      // Size in bytes.
+        TYPE_KILOBYTE,  // Size in kilobytes.
+        TYPE_MEGABYTE,  // Size in megabytes.
+        TYPE_GIGABYTE,   // Size in gigabytes.
+        TYPE_TERABYTE // Size in terabytes.
+    } size_type;
+    BOOL eof;           // End of file flag. TRUE if end of file reached.
+    BOOL is_open;       // File open flag. TRUE if file is currently open.
  };
 
 // Public facing functions
@@ -153,3 +207,8 @@ void logfs( FILESTREAM* fs );
 FILESTREAM* fs_open( FILESTREAM* fs, const char* path, const char* mode );
 BOOL fs_close( FILESTREAM* fs, BOOL cleanup );
 void LOG( char* fmt, ... );
+char* size_type_to_string( int type );
+char* size_type_from_len( size_t len );
+double double_to_human( size_t hr_size );
+size_t fs_read( FILESTREAM* fs, size_t size );
+BOOL _init_fs( void );

@@ -66,6 +66,9 @@
 #include <commctrl.h>
 #include "stdbool.h"
 #include <process.h>
+#include <stdarg.h>
+#include <corecrt.h>
+
 
 
 
@@ -153,20 +156,45 @@ WINAPI WinMain ( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
 //  unsigned long long int stop;
     FILESTREAM *fs;
     char buf[ 1024 ];
-
+    
+    
+    _init_fs( );
     //GiveError( "Hello from SMS!", TRUE );
      
     // Initialize our DB
     check_or_create_db ();
     sms_backup = XML_new ();
-    fs = fs_open ( NULL, "c:\\nanobit\\sms-20240607163630.xml", "rb" );
+    fs = fs_open ( NULL, "c:\\nanobit\\sms.xml", "r" );
     if ( fs )
     {
-        logfs ( fs );
-        sprintf ( buf, "Size of file: %zu mB", fs->file_size /1024/1024/1024   );
+        size_t sread = 0;
 
-        GiveError ( buf, TRUE );
-        
+        sread = fs_read( fs, 0 );
+
+        sprintf( buf, "Size of file: %zu mB\n"
+                 "Human readable size: %f.4 %s\n"
+                 "Example read: %zu bytes\n"
+                 "Total EOL? %zu\n"
+                 "POS: %zu\n",
+                 ( size_t )fs->file_size / 1024 / 1024 / 1024,
+                 fs->hr_size, size_type_to_string( fs->size_type ),
+
+                 sread < 1 ? (size_t)0 : sread,
+                 fs->total_lines, fs->pos );
+        LOG( buf );
+    }
+    else
+    {
+        LOG( "Failed to open file stream for c:\\nanobit\\sms.xml" );
+    }
+
+    if ( fs )
+    {
+        logfs( fs );
+        if ( fs->buffer )
+            memcpy ( buf, &fs->buffer[ 3921 ], 1000 );
+        buf[ 999 ] = '\0';
+        LOG( "Buffer 3921: %s", buf );
     }
 
 

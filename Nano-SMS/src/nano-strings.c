@@ -26,7 +26,7 @@ specific file that theyre in a the time.
 
  */
 
-
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +40,12 @@ specific file that theyre in a the time.
 #include <uxtheme.h>
 #include <commctrl.h>
 #include <stdarg.h>
+#include <ctype.h>
+#include <corecrt.h>
+
+
 #include "stdbool.h"
+
 #include "sqlite3/sqlite3.h"
 
 
@@ -62,6 +67,12 @@ int str_isnumber ( const char *s );
 
 
 
+/**
+ * fround - Rounds a floating point number to two decimal places.
+ * @f: The floating point number to round.
+ *
+ * Returns the rounded value.
+ */
 double fround ( double f )
 {
     f *= 100;
@@ -72,10 +83,14 @@ double fround ( double f )
     return f;
 }
 
-
-// Going to call nano_malloc directly here for not-so-obvious reasons.
-// This function is rolled, locally, for our memory manager.
-
+/**
+ * str_dup1 - Duplicates a string using nano_malloc for memory allocation.
+ * @str: The string to duplicate.
+ * @file: The file name for memory tracking.
+ * @line: The line number for memory tracking.
+ *
+ * Returns a pointer to the duplicated string, or NULL on failure.
+ */
 char *str_dup1 ( const char *str, char *file, int line )
 {
     char *result;
@@ -84,22 +99,24 @@ char *str_dup1 ( const char *str, char *file, int line )
         return NULL;
 
     result = ( char * )nano_malloc ( (( int )strlen ( str ) + 10) * sizeof ( char * ), file, line );
-    //	result  = (char*)malloc(((int) strlen(str) + 10) * sizeof(char*));
     if ( result == ( char * )0 )
     {
         free ( result );
-
         return ( char * )0;
     }
     strcpy ( result, str );
     return result;
 }
 
-/* Personal string search. Only searches for one char, not a whole string. */
+/**
+ * str_search - Searches for the presence of '\033' and 'm' in a string.
+ * @str: The string to search.
+ *
+ * Returns TRUE if both are found, FALSE otherwise.
+ */
 BOOL str_search ( const char *str )
 {
     const char *point = str;
-
     BOOL efound = FALSE;
     BOOL mfound = FALSE;
     if ( str == NULL )
@@ -118,6 +135,13 @@ BOOL str_search ( const char *str )
     else
         return TRUE;
 }
+
+/**
+ * str_ret - Returns the index of the first occurrence of '\033' in a string.
+ * @str: The string to search.
+ *
+ * Returns the index, or 0 if not found.
+ */
 int str_ret ( const char *str )
 {
     const char *point = str;
@@ -129,13 +153,16 @@ int str_ret ( const char *str )
     }
     return 0;
 }
+
+/**
+ * strip_junk - Removes all '\033' characters from a string.
+ * @str: The string to modify.
+ */
 void strip_junk ( char *str )
 {
     const char *point;
     char fleh[8000] = "";
-
     char *buf;
-
     buf = fleh;
 
     if ( str == NULL )
@@ -154,6 +181,13 @@ void strip_junk ( char *str )
     return;
 }
 
+/**
+ * strprefix1 - Compares two strings for prefix match, case insensitive.
+ * @astr: The first string.
+ * @bstr: The second string.
+ *
+ * Returns TRUE if not a prefix, FALSE if prefix matches.
+ */
 BOOL strprefix1 ( const char *astr, const char *bstr )
 {
     if ( astr == NULL )
@@ -170,20 +204,27 @@ BOOL strprefix1 ( const char *astr, const char *bstr )
     return FALSE;
 }
 
+/**
+ * one_argument - Extracts the first argument from a string, handling quotes.
+ * @argument: The input string.
+ * @arg_first: Buffer to store the first argument.
+ *
+ * Returns pointer to the remainder of the string.
+ */
 char *one_argument ( char *argument, char *arg_first )
 {
-    char cEnd;
+    char c;
 
     while ( isspace ( *argument ) )
         argument++;
 
-    cEnd = ' ';
+    c = ' ';
     if ( *argument == '\'' || *argument == '"' )
-        cEnd = *argument++;
+        c = *argument++;
 
     while ( *argument != '\0' )
     {
-        if ( *argument == cEnd )
+        if ( *argument == c )
         {
             argument++;
             break;
@@ -199,6 +240,14 @@ char *one_argument ( char *argument, char *arg_first )
 
     return argument;
 }
+
+/**
+ * script_strip - Extracts argument from a script string, handling braces.
+ * @argument: The input string.
+ * @arg_first: Buffer to store the argument.
+ *
+ * Returns pointer to the remainder of the string.
+ */
 char *script_strip ( char *argument, char *arg_first )
 {
     char cEnd;
@@ -232,6 +281,13 @@ char *script_strip ( char *argument, char *arg_first )
     return argument;
 }
 
+/**
+ * simple_str_match - Checks if pattern exists in input string.
+ * @input: The input string.
+ * @pattern: The pattern to search for.
+ *
+ * Returns TRUE if pattern is found, FALSE otherwise.
+ */
 BOOL simple_str_match ( char *input, char *pattern )
 {
     char *inputPtr = input;
@@ -262,9 +318,14 @@ BOOL simple_str_match ( char *input, char *pattern )
     return FALSE;
 }
 
-char *commaize ( unsigned long long int x, char buf[] ) // Turn a ULONG_INT into a comma string.
-// IE: 300000 = 300,000. Probably not the
-// most efficent way to do it, but ah well
+/**
+ * commaize - Converts an unsigned long long integer to a comma-separated string.
+ * @x: The number to convert.
+ * @buf: Buffer to store the result.
+ *
+ * Returns pointer to the formatted string.
+ */
+char *commaize ( unsigned long long int x, char buf[] )
 {
     static char *to_ret = NULL;
     char temp[1024] = "";
@@ -273,7 +334,7 @@ char *commaize ( unsigned long long int x, char buf[] ) // Turn a ULONG_INT into
     buf[0] = '\0';
 
     temp[0] = '\0';
-    sprintf ( temp, "%llu", x ); // Yes yes, it's a hack.
+    sprintf ( temp, "%llu", x );
 
     to_ret = temp;
 
@@ -281,7 +342,6 @@ char *commaize ( unsigned long long int x, char buf[] ) // Turn a ULONG_INT into
     {
         buf[0] = '\0';
         sprintf ( &buf[0], "%llu", x );
-
         return &buf[0];
     }
     else if ( x > 999 )
@@ -291,7 +351,7 @@ char *commaize ( unsigned long long int x, char buf[] ) // Turn a ULONG_INT into
         if ( !*--point )
             return to_ret;
         i = ( int )( int )strlen ( temp ) - 1;
-        c = i / 3; // How many commas. :)
+        c = i / 3;
         i += c;
         temp[i + c + 1] = '\0';
 
@@ -301,7 +361,6 @@ char *commaize ( unsigned long long int x, char buf[] ) // Turn a ULONG_INT into
             {
                 buf[0] = '\0';
                 strcat ( buf, temp );
-
                 return to_ret;
             }
             if ( f == 3 )
@@ -309,7 +368,6 @@ char *commaize ( unsigned long long int x, char buf[] ) // Turn a ULONG_INT into
                 f = 0;
                 temp[i] = ',';
                 *++point;
-
                 continue;
             }
 
@@ -320,13 +378,19 @@ char *commaize ( unsigned long long int x, char buf[] ) // Turn a ULONG_INT into
         to_ret = temp;
         buf[0] = '\0';
         strcat ( buf, temp );
-
         return &buf[0];
     }
 
     return &buf[0];
 }
 
+/**
+ * string_compare - Compares two strings case-insensitively.
+ * @ostr: First string.
+ * @tstr: Second string.
+ *
+ * Returns TRUE if strings differ, FALSE if equal.
+ */
 BOOL string_compare ( const char *ostr, const char *tstr )
 {
     if ( ostr == NULL || tstr == NULL )
@@ -336,46 +400,50 @@ BOOL string_compare ( const char *ostr, const char *tstr )
     for ( ; *ostr || *tstr; ostr++, tstr++ )
     {
         if ( LOWER ( *ostr ) != LOWER ( *tstr ) )
-
             return TRUE;
     }
     return FALSE;
 }
 
+/**
+ * get_date - Gets the current date and time as a formatted string.
+ *
+ * Returns pointer to the static date string.
+ */
 char *get_date ( void )
 {
     time_t t;
     struct tm *t_m;
-
     static char d[1024];
     t = time ( NULL );
-
     t_m = localtime ( &t );
-
     sprintf ( d, "%2.2d/%2.2d/%d %2.2d:%2.2d%s", t_m->tm_mon + 1, t_m->tm_mday, t_m->tm_year + 1900, t_m->tm_hour == 0 ? 12 : (t_m->tm_hour) > 12 ? (t_m->tm_hour) - 12 : (t_m->tm_hour), t_m->tm_min,
               (t_m->tm_hour) > 12 ? "pm" : "am" );
-
     return d;
 }
 
+/**
+ * get_date_notime - Gets the current date as a formatted string (no time).
+ *
+ * Returns pointer to the static date string.
+ */
 char *get_date_notime ( void )
 {
     time_t t;
     struct tm *t_m;
-
     static char d[1024];
     t = time ( NULL );
-
     t_m = localtime ( &t );
-
     sprintf ( d, "%2.2d/%2.2d/%d", t_m->tm_mon + 1, t_m->tm_mday, t_m->tm_year + 1900 );
-
     return d;
 }
-/*
- * Truncate line to MAX_CHAR_COL, wrapping at
- * last space found. */
 
+/**
+ * make_to_col - Wraps a string to MAX_CHAR_COL columns, breaking at spaces.
+ * @str: The input string.
+ *
+ * Returns pointer to the wrapped string.
+ */
 char *make_to_col ( char *str )
 {
     char *tmp_str;
@@ -392,9 +460,7 @@ char *make_to_col ( char *str )
         return str;
 
     i = ( int )strlen ( str );
-
     i = (i + (i / 2));
-
     if ( i < 1 )
         i = 2;
     if ( i > ( int )strlen ( str ) )
@@ -448,7 +514,6 @@ char *make_to_col ( char *str )
         if ( *point == '\b' || *point == '\033' || *point == '\032' )
         {
             x--;
-
             continue;
         }
     }
@@ -456,6 +521,12 @@ char *make_to_col ( char *str )
     return tmp_str;
 }
 
+/**
+ * make_to_page - Wraps a string to 100 columns, breaking at spaces.
+ * @str: The input string.
+ *
+ * Returns pointer to the wrapped string.
+ */
 char *make_to_page ( char *str )
 {
     char *tmp_str;
@@ -473,7 +544,6 @@ char *make_to_page ( char *str )
 
     i = ( int )strlen ( str );
     i = (i + (i / 2));
-
     if ( i < 1 )
         i = 2;
     if ( i > ( int )strlen ( str ) )
@@ -527,7 +597,6 @@ char *make_to_page ( char *str )
         if ( *point == '\b' || *point == '\033' || *point == '\032' )
         {
             x--;
-
             continue;
         }
     }
@@ -535,6 +604,12 @@ char *make_to_page ( char *str )
     return tmp_str;
 }
 
+/**
+ * count_lines - Counts the number of lines in a string.
+ * @str: The input string.
+ *
+ * Returns the number of lines.
+ */
 int count_lines ( char *str )
 {
     char *point;
@@ -553,6 +628,12 @@ int count_lines ( char *str )
     return len == 0 ? 1 : (len + 1);
 }
 
+/**
+ * is_date - Checks if a string is a valid date in MM/DD/YYYY format.
+ * @range: The input string.
+ *
+ * Returns TRUE if valid date, FALSE otherwise.
+ */
 BOOL is_date ( char *range )
 {
     char str[1024];
@@ -566,7 +647,6 @@ BOOL is_date ( char *range )
         return FALSE;
 
     sprintf ( str, "%s", range );
-    // Lots of sanity checking. Mine or the code? Who knows.
 
     token = strtok ( str, delim );
 
@@ -608,11 +688,10 @@ BOOL is_date ( char *range )
     return correct_date;
 }
 
-
-
-
-
-
+/**
+ * write_buffer - Writes a string to the debug file.
+ * @str: The string to write.
+ */
 void write_buffer ( const char *str )
 {
     FILE *fp;
@@ -630,11 +709,15 @@ void write_buffer ( const char *str )
     fclose ( fp );
 }
 
-
-
+/**
+ * read_string - Reads a string from a file into a buffer.
+ * @buf: Buffer to store the string.
+ * @fp: File pointer to read from.
+ *
+ * Returns the length of the string read, or EOF on error.
+ */
 int read_string ( char buf[], FILE *fp )
 {
-
     int c;
     int len = 0;
     int f;
@@ -645,33 +728,25 @@ int read_string ( char buf[], FILE *fp )
     while ( !feof ( fp ) )
     {
         f++;
-
-
-
-
         c = getc ( fp );
-
-
-
         if ( c == '\0' )
             return len;
         if ( c == '\n' )
             return len;
-
         if ( c == '\r' )
             return len;
         buf[len++] = c;
-        //              
-        //		if (f >= 100)
-        //return len;        
-
-
-
     }
     return EOF;
 }
-// Physically trims a string. Left, right, or both, for the following three functions.
-// AI written.
+
+/**
+ * str_lefttrim - Trims leading whitespace from a string.
+ * @str: The string to trim.
+ * @len: The length of the string.
+ *
+ * Returns the new length after trimming.
+ */
 int str_lefttrim ( char *str, int len )
 {
     int i, j;
@@ -685,6 +760,14 @@ int str_lefttrim ( char *str, int len )
     str[j] = '\0';
     return len - i;
 }
+
+/**
+ * str_righttrim - Trims trailing whitespace from a string.
+ * @str: The string to trim.
+ * @len: The length of the string.
+ *
+ * Returns the new length after trimming.
+ */
 int str_righttrim ( char *str, int len )
 {
     int i;
@@ -694,14 +777,27 @@ int str_righttrim ( char *str, int len )
     str[i + 1] = '\0';
     return i + 1;
 }
+
+/**
+ * str_trim - Trims both leading and trailing whitespace from a string.
+ * @str: The string to trim.
+ * @len: The length of the string.
+ *
+ * Returns the new length after trimming.
+ */
 int str_trim ( char *str, int len )
 {
     len = str_righttrim ( str, len );
     len = str_lefttrim ( str, len );
     return len;
 }
-// End AI code
 
+/**
+ * str_upper - Converts the first character of a string to uppercase.
+ * @str: The string to modify.
+ *
+ * Returns 1 if conversion occurred, 0 otherwise.
+ */
 int str_upper ( char *str )
 {
     if ( str == NULL )
@@ -710,6 +806,13 @@ int str_upper ( char *str )
         str[0] = str[0] - ('a' - 'A');
     return 1;
 }
+
+/**
+ * str_lower - Converts the first character of a string to lowercase.
+ * @str: The string to modify.
+ *
+ * Returns 1 if conversion occurred, 0 otherwise.
+ */
 int str_lower ( char *str )
 {
     if ( str == NULL )
@@ -718,6 +821,14 @@ int str_lower ( char *str )
         str[0] = str[0] + ('a' - 'A');
     return 1;
 }
+
+/**
+ * str_nocase_cmp - Compares two strings case-insensitively.
+ * @s1: First string.
+ * @s2: Second string.
+ *
+ * Returns 0 if equal, non-zero otherwise.
+ */
 int str_nocase_cmp ( const char *s1, const char *s2 )
 {
     int c1, c2;
@@ -737,6 +848,15 @@ int str_nocase_cmp ( const char *s1, const char *s2 )
     while ( c1 == c2 );
     return c1 - c2;
 }
+
+/**
+ * str_nocase_ncmp - Compares up to n characters of two strings case-insensitively.
+ * @s1: First string.
+ * @s2: Second string.
+ * @n: Number of characters to compare.
+ *
+ * Returns 0 if equal, non-zero otherwise.
+ */
 int str_nocase_ncmp ( const char *s1, const char *s2, size_t n )
 {
     int c1, c2;
@@ -756,6 +876,14 @@ int str_nocase_ncmp ( const char *s1, const char *s2, size_t n )
     while ( c1 == c2 );
     return c1 - c2;
 }
+
+/**
+ * str_nocase_str - Finds a substring in a string case-insensitively.
+ * @haystack: The string to search.
+ * @needle: The substring to find.
+ *
+ * Returns pointer to the first occurrence, or NULL if not found.
+ */
 char *str_nocase_str ( const char *haystack, const char *needle )
 {
     size_t needle_len;
@@ -772,6 +900,14 @@ char *str_nocase_str ( const char *haystack, const char *needle )
     }
     return NULL;
 }
+
+/**
+ * str_nocase_chr - Finds a character in a string case-insensitively.
+ * @s: The string to search.
+ * @c: The character to find.
+ *
+ * Returns pointer to the character, or NULL if not found.
+ */
 char *str_nocase_chr ( const char *s, int c )
 {
     if ( s == NULL )
@@ -791,6 +927,14 @@ char *str_nocase_chr ( const char *s, int c )
         return ( char * )s;
     return NULL;
 }
+
+/**
+ * str_nocase_spn - Returns the length of the initial segment of s containing only accept chars (case-insensitive).
+ * @s: The string to search.
+ * @accept: The accepted characters.
+ *
+ * Returns the length of the segment.
+ */
 size_t str_nocase_spn ( const char *s, const char *accept )
 {
     size_t count = 0;
@@ -805,6 +949,14 @@ size_t str_nocase_spn ( const char *s, const char *accept )
     }
     return count;
 }
+
+/**
+ * str_nocase_cspn - Returns the length of the initial segment of s not containing reject chars (case-insensitive).
+ * @s: The string to search.
+ * @reject: The rejected characters.
+ *
+ * Returns the length of the segment.
+ */
 size_t str_nocase_cspn ( const char *s, const char *reject )
 {
     size_t count = 0;
@@ -819,6 +971,13 @@ size_t str_nocase_cspn ( const char *s, const char *reject )
     }
     return count;
 }
+
+/**
+ * str_nocase_dup - Duplicates a string.
+ * @s: The string to duplicate.
+ *
+ * Returns pointer to the duplicated string, or NULL on failure.
+ */
 char *str_nocase_dup ( const char *s )
 {
     char *dup;
@@ -833,7 +992,12 @@ char *str_nocase_dup ( const char *s )
     return dup;
 }
 
-
+/**
+ * str_rev - Reverses a string in place.
+ * @s: The string to reverse.
+ *
+ * Returns pointer to the reversed string.
+ */
 char *str_rev ( char *s )
 {
     char *start, *end, tmp;
@@ -852,6 +1016,12 @@ char *str_rev ( char *s )
     return s;
 }
 
+/**
+ * str_isnumber - Checks if a string is a valid integer number.
+ * @s: The string to check.
+ *
+ * Returns 1 if valid number, 0 otherwise.
+ */
 int str_isnumber ( const char *s )
 {
     if ( s == NULL || *s == '\0' )
@@ -869,6 +1039,12 @@ int str_isnumber ( const char *s )
     return 1;
 }
 
+/**
+ * is_number_decimal - Checks if a string is a valid decimal number.
+ * @s: The string to check.
+ *
+ * Returns 1 if valid decimal, 0 otherwise.
+ */
 int is_number_decimal ( const char *s )
 {
     int seen_decimal = 0;
@@ -880,7 +1056,7 @@ int is_number_decimal ( const char *s )
         return 0;
     while ( *s )
     {
-        if ( *s < '0' || *s > '9' || *s == '.' ) // Added check for decimal. But also make sure only one.
+        if ( *s < '0' || *s > '9' || *s == '.' )
         {
             if ( *s == '.' && !seen_decimal )
             {

@@ -4,6 +4,7 @@
    that it exists in as well. So consider this the master of NWC_main.c for now.
   */
 
+#include <string.h>
 #include <windows.h>
 #include <commctrl.h>
 #include <stdio.h>
@@ -13,6 +14,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
+
 
 
 #include "nano-sms.h"

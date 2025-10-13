@@ -75,7 +75,7 @@
 #define LOWER(c)        ((c) >= 'A' && (c) <= 'Z' ? (c)+'a'-'A' : (c))
 #define UPPER(c)        ((c) >= 'a' && (c) <= 'z' ? (c)+'A'-'a' : (c))
 
-#define DEBUG_FILE "debug.log"
+#define DEBUG_FILE "c:\\nanobit\\debug.log"
 
 
 
@@ -98,7 +98,7 @@ char ERROR_STRING[1024]; // Global error string for the application. Used to sto
 
 #define  APP_NAME  "Nano-SMS" 
 #define  APP_VERSION  "0.1.0" 
-#define  APP_AUTHOR  "Bi0teQ @ NanobitSoftware."
+#define  APP_AUTHOR  "Bioteq @ NanobitSoftware."
 #define  APP_LICENSE  "GPLv3" 
 
 
