@@ -45,9 +45,6 @@
 
     */
 #pragma once
-#include <stdio.h>
-#include <stdlib.h>
-#define BOOL int
 
 
 
@@ -159,7 +156,7 @@ struct filestream
     time_t opened;       // The time the file was opened. For logging and auditing purposes.
     time_t modified;     // The time the file was last modified. Useful for file change detection.
     time_t accessed;     // The time the file was last accessed. For tracking usage and access patterns.
-    FILE *file;          // The file pointer. Standard C FILE* used for file I/O operations.
+    FILE* file;          // The file pointer. Standard C FILE* used for file I/O operations.
     int last_token;      // The last token read from the file. Used in parsing routines.
     int cur_token;       // The current token being processed. For stateful parsing.
     int last_error;      // Error flag. Stores the last error code encountered.
@@ -174,7 +171,7 @@ struct filestream
         STATE_ERRORS,    // Stream is in error state.
         STATE_SEEKING    // Stream is seeking to a position.
     } state;             // The current state of the stream. Used for managing stream lifecycle.
-    enum 
+    enum
     {
         MODE_READ,       // File opened for reading.
         MODE_WRITE,      // File opened for writing.
@@ -184,7 +181,7 @@ struct filestream
         MODE_ERRORS,     // Error mode.
         MODE_NONE        // No mode set.
     } mode;              // The mode the file was opened in. Used for access control.
-    enum 
+    enum
     {
         TYPE_BYTE,      // Size in bytes.
         TYPE_KILOBYTE,  // Size in kilobytes.
@@ -194,7 +191,7 @@ struct filestream
     } size_type;
     BOOL eof;           // End of file flag. TRUE if end of file reached.
     BOOL is_open;       // File open flag. TRUE if file is currently open.
- };
+};
 
 // Public facing functions
 BOOL unregister_all_streams( void );

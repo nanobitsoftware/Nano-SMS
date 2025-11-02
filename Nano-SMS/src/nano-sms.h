@@ -49,8 +49,10 @@
     // Boiler plate; makes include files easier to manage, and keeps the code cleaner.
 
 
-//#include <corecrt.h>
-//#include <stdio.h>
+
+
+#pragma once
+#include <windows.h>
 
 #define WIN32_LEAN_AND_MEAN 
 
@@ -132,6 +134,7 @@ typedef struct smsbackup SMS_BACKUP;
 typedef struct smsitem SMS_ITEM;
 typedef struct callitem CALL_ITEM;
 typedef struct mediaitem MEDIA_ITEM;
+
 
 // STRUCT PROTOYPES END
 

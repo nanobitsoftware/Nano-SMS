@@ -52,10 +52,11 @@
 
 // Include NWC for our Windowing system
 
+#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <windows.h>
+
 #include <math.h>
 #include <sys/types.h>
 #include <time.h>
@@ -95,46 +96,46 @@ SMS_BACKUP *sms_backup = NULL; // The SMS backup structure. Global entity.
 //  and that the necessary tables are created.
 
 
-void LOG ( char *fmt, ... )
+void LOG( char *fmt, ... )
 {
 
     char buf[ 15000 ];
     va_list args;
-    va_start ( args, fmt );
-    vsprintf ( buf, fmt, args );
-    va_end ( args );
-    write_buffer ( buf );
+    va_start( args, fmt );
+    vsprintf( buf, fmt, args );
+    va_end( args );
+    write_buffer( buf );
 
 
 
 }
 
-void check_or_create_db ( void )
+void check_or_create_db( void )
 {
     int rc;
     // Open the database file, or create it if it doesn't exist.
-    rc = sqlite3_open ( "sms_backup.db", &SMS_DB );
+    rc = sqlite3_open( "sms_backup.db", &SMS_DB );
     if ( rc )
     {
-        fprintf ( stderr, "Can't open database: %s\n", sqlite3_errmsg ( SMS_DB ) );
-        GiveError ( "Unable to open database file. Bailing, sorry!", TRUE );
+        fprintf( stderr, "Can't open database: %s\n", sqlite3_errmsg( SMS_DB ) );
+        GiveError( "Unable to open database file. Bailing, sorry!", TRUE );
         return;
     }
     // Create the full database if it doesn't exist.
-    rc = sqlite3_exec ( SMS_DB, CREATE_TABLES, NULL, 0, &SMS_DB_ERROR );
+    rc = sqlite3_exec( SMS_DB, CREATE_TABLES, NULL, 0, &SMS_DB_ERROR );
     if ( rc != SQLITE_OK )
 
 
     {
-        fprintf ( stderr, "SQL error: %s\n", SMS_DB_ERROR );
-        GiveError ( "Unable to create database file. Bailing, sorry!", FALSE );
-        GiveError ( SMS_DB_ERROR, TRUE );
-        sqlite3_close ( SMS_DB );
+        fprintf( stderr, "SQL error: %s\n", SMS_DB_ERROR );
+        GiveError( "Unable to create database file. Bailing, sorry!", FALSE );
+        GiveError( SMS_DB_ERROR, TRUE );
+        sqlite3_close( SMS_DB );
         return;
     }
     else
     {
-        LOG ( "Database created successfully." );
+        LOG( "Database created successfully." );
 
     }
 
@@ -147,24 +148,24 @@ void check_or_create_db ( void )
 
 
 // In WinMain, replace the allocation block with thread creation
-WINAPI WinMain ( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
+WINAPI WinMain( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
 {
     MSG msg;
-    void *ptrs[7] = { 0 };
+    void *ptrs[ 7 ] = { 0 };
 //  HANDLE threads[10000];
 //  unsigned long long int start;
 //  unsigned long long int stop;
     FILESTREAM *fs;
     char buf[ 1024 ];
-    
-    
+
+
     _init_fs( );
     //GiveError( "Hello from SMS!", TRUE );
-     
+
     // Initialize our DB
-    check_or_create_db ();
-    sms_backup = XML_new ();
-    fs = fs_open ( NULL, "c:\\nanobit\\sms.xml", "r" );
+    check_or_create_db( );
+    sms_backup = XML_new( );
+    fs = fs_open( NULL, "c:\\nanobit\\sms.xml", "r" );
     if ( fs )
     {
         size_t sread = 0;
@@ -179,7 +180,7 @@ WINAPI WinMain ( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
                  ( size_t )fs->file_size / 1024 / 1024 / 1024,
                  fs->hr_size, size_type_to_string( fs->size_type ),
 
-                 sread < 1 ? (size_t)0 : sread,
+                 sread < 1 ? ( size_t )0 : sread,
                  fs->total_lines, fs->pos );
         LOG( buf );
     }
@@ -192,16 +193,16 @@ WINAPI WinMain ( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
     {
         logfs( fs );
         if ( fs->buffer )
-            memcpy ( buf, &fs->buffer[ 3921 ], 1000 );
+            memcpy( buf, &fs->buffer[ 3921 ], 1000 );
         buf[ 999 ] = '\0';
         LOG( "Buffer 3921: %s", buf );
     }
 
 
-    GiveError ( "Within windows main function and will now be exiing.", TRUE );
-    exit ( 12 );
+    GiveError( "Within windows main function and will now be exiing.", TRUE );
+    exit( 12 );
 
-    while ( GetMessage ( &msg, NULL, 0, 0 ) )
+    while ( GetMessage( &msg, NULL, 0, 0 ) )
     {
         // Process the message.
         if ( msg.message == WM_QUIT )
@@ -218,11 +219,11 @@ WINAPI WinMain ( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
     }
     {
         // Put if statement here ffor checking if we're still running!
-        TranslateMessage ( &msg ); // Main message loops.
-        DispatchMessage ( &msg );
+        TranslateMessage( &msg ); // Main message loops.
+        DispatchMessage( &msg );
     }
 
-    unregister_all_streams ( ); // Clear all streams in case we have some.
+    unregister_all_streams( ); // Clear all streams in case we have some.
 
 
     return ( int )msg.wParam;
@@ -237,12 +238,12 @@ WINAPI WinMain ( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
 
 
 // Function to initialize the SMS_BACKUP structure.
-SMS_BACKUP *init_sms_backup ()
+SMS_BACKUP *init_sms_backup( )
 {
-    SMS_BACKUP *backup = ( SMS_BACKUP * )malloc ( sizeof ( SMS_BACKUP ) );
+    SMS_BACKUP *backup = ( SMS_BACKUP * )malloc( sizeof( SMS_BACKUP ) );
     if ( !backup )
     {
-        fprintf ( stderr, "Failed to allocate memory for SMS_BACKUP.\n" );
+        fprintf( stderr, "Failed to allocate memory for SMS_BACKUP.\n" );
         return NULL;
     }
     backup->sms_items = NULL;
@@ -255,379 +256,379 @@ SMS_BACKUP *init_sms_backup ()
 }
 
 // Function to free the SMS_BACKUP structure.
-void free_sms_backup ( SMS_BACKUP *backup )
+void free_sms_backup( SMS_BACKUP *backup )
 {
     if ( !backup ) return;
     for ( int i = 0; i < backup->sms_count; i++ )
     {
-        free ( backup->sms_items[i].id );
-        free ( backup->sms_items[i].address );
-        free ( backup->sms_items[i].body );
+        free( backup->sms_items[ i ].id );
+        free( backup->sms_items[ i ].address );
+        free( backup->sms_items[ i ].body );
     }
-    free ( backup->sms_items );
+    free( backup->sms_items );
     for ( int i = 0; i < backup->call_count; i++ )
     {
-        free ( backup->call_items[i].id );
-        free ( backup->call_items[i].address );
+        free( backup->call_items[ i ].id );
+        free( backup->call_items[ i ].address );
     }
-    free ( backup->call_items );
+    free( backup->call_items );
     for ( int i = 0; i < backup->media_count; i++ )
     {
-        free ( backup->media_items[i].id );
-        free ( backup->media_items[i].address );
-        free ( backup->media_items[i].file_path );
+        free( backup->media_items[ i ].id );
+        free( backup->media_items[ i ].address );
+        free( backup->media_items[ i ].file_path );
     }
-    free ( backup->media_items );
-    free ( backup );
+    free( backup->media_items );
+    free( backup );
 }
 // Function to add an SMS item to the backup.
-void add_sms_item ( SMS_BACKUP *backup, const char *id, const char *address, const char *body, time_t date, int type )
+void add_sms_item( SMS_BACKUP *backup, const char *id, const char *address, const char *body, time_t date, int type )
 {
     if ( !backup ) return;
-    backup->sms_items = ( SMS_ITEM * )realloc ( backup->sms_items, sizeof ( SMS_ITEM ) * (backup->sms_count + 1) );
+    backup->sms_items = ( SMS_ITEM * )realloc( backup->sms_items, sizeof( SMS_ITEM ) * ( backup->sms_count + 1 ) );
     if ( !backup->sms_items )
     {
-        fprintf ( stderr, "Failed to allocate memory for SMS items.\n" );
+        fprintf( stderr, "Failed to allocate memory for SMS items.\n" );
         return;
     }
-    SMS_ITEM *item = &backup->sms_items[backup->sms_count];
-    item->id = strdup ( id );
-    item->address = strdup ( address );
-    item->body = strdup ( body );
+    SMS_ITEM *item = &backup->sms_items[ backup->sms_count ];
+    item->id = strdup( id );
+    item->address = strdup( address );
+    item->body = strdup( body );
     item->date = date;
     item->type = type;
     backup->sms_count++;
 }
 // Function to add a call item to the backup.
-void add_call_item ( SMS_BACKUP *backup, const char *id, const char *address, time_t date, int type )
+void add_call_item( SMS_BACKUP *backup, const char *id, const char *address, time_t date, int type )
 {
     if ( !backup ) return;
-    backup->call_items = ( CALL_ITEM * )realloc ( backup->call_items, sizeof ( CALL_ITEM ) * (backup->call_count + 1) );
+    backup->call_items = ( CALL_ITEM * )realloc( backup->call_items, sizeof( CALL_ITEM ) * ( backup->call_count + 1 ) );
     if ( !backup->call_items )
     {
-        fprintf ( stderr, "Failed to allocate memory for call items.\n" );
+        fprintf( stderr, "Failed to allocate memory for call items.\n" );
         return;
     }
-    CALL_ITEM *item = &backup->call_items[backup->call_count];
-    item->id = strdup ( id );
-    item->address = strdup ( address );
+    CALL_ITEM *item = &backup->call_items[ backup->call_count ];
+    item->id = strdup( id );
+    item->address = strdup( address );
     item->date = date;
     item->type = type;
     backup->call_count++;
 }
 // Function to add a media item to the backup.
-void add_media_item ( SMS_BACKUP *backup, const char *id, const char *address, const char *file_path, time_t date )
+void add_media_item( SMS_BACKUP *backup, const char *id, const char *address, const char *file_path, time_t date )
 {
     if ( !backup ) return;
-    backup->media_items = ( MEDIA_ITEM * )realloc ( backup->media_items, sizeof ( MEDIA_ITEM ) * (backup->media_count + 1) );
+    backup->media_items = ( MEDIA_ITEM * )realloc( backup->media_items, sizeof( MEDIA_ITEM ) * ( backup->media_count + 1 ) );
     if ( !backup->media_items )
     {
-        fprintf ( stderr, "Failed to allocate memory for media items.\n" );
+        fprintf( stderr, "Failed to allocate memory for media items.\n" );
         return;
     }
-    MEDIA_ITEM *item = &backup->media_items[backup->media_count];
-    item->id = strdup ( id );
-    item->address = strdup ( address );
-    item->file_path = strdup ( file_path );
+    MEDIA_ITEM *item = &backup->media_items[ backup->media_count ];
+    item->id = strdup( id );
+    item->address = strdup( address );
+    item->file_path = strdup( file_path );
     item->date = date;
     backup->media_count++;
 }
 // Function to print the SMS backup contents.
-void print_sms_backup ( const SMS_BACKUP *backup )
+void print_sms_backup( const SMS_BACKUP *backup )
 {
     if ( !backup ) return;
-    printf ( "SMS Items:\n" );
+    printf( "SMS Items:\n" );
     for ( int i = 0; i < backup->sms_count; i++ )
     {
-        const SMS_ITEM *item = &backup->sms_items[i];
-        printf ( "ID: %s, Address: %s, Body: %s, Date: %zu, Type: %d\n", item->id, item->address, item->body, item->date, item->type );
+        const SMS_ITEM *item = &backup->sms_items[ i ];
+        printf( "ID: %s, Address: %s, Body: %s, Date: %zu, Type: %d\n", item->id, item->address, item->body, item->date, item->type );
     }
-    printf ( "Call Items:\n" );
+    printf( "Call Items:\n" );
     for ( int i = 0; i < backup->call_count; i++ )
     {
-        const CALL_ITEM *item = &backup->call_items[i];
-        printf ( "ID: %s, Address: %s, Date: %zu, Type: %d\n", item->id, item->address, item->date, item->type );
+        const CALL_ITEM *item = &backup->call_items[ i ];
+        printf( "ID: %s, Address: %s, Date: %zu, Type: %d\n", item->id, item->address, item->date, item->type );
     }
-    printf ( "Media Items:\n" );
+    printf( "Media Items:\n" );
     for ( int i = 0; i < backup->media_count; i++ )
     {
-        const MEDIA_ITEM *item = &backup->media_items[i];
-        printf ( "ID: %s, Address: %s, File Path: %s, Date: %zu\n", item->id, item->address, item->file_path, item->date );
+        const MEDIA_ITEM *item = &backup->media_items[ i ];
+        printf( "ID: %s, Address: %s, File Path: %s, Date: %zu\n", item->id, item->address, item->file_path, item->date );
     }
 }
 // Function to save the SMS backup to a file (not implemented yet).
-void save_sms_backup_to_file ( const SMS_BACKUP *backup, const char *filename )
+void save_sms_backup_to_file( const SMS_BACKUP *backup, const char *filename )
 {
     // This function will be implemented later to save the backup to a file.
     // For now, we will just print a message.
-    printf ( "Saving SMS backup to file: %s (not implemented yet)\n", filename );
+    printf( "Saving SMS backup to file: %s (not implemented yet)\n", filename );
 }
 // Function to load the SMS backup from a file (not implemented yet).
-void load_sms_backup_from_file ( SMS_BACKUP *backup, const char *filename )
+void load_sms_backup_from_file( SMS_BACKUP *backup, const char *filename )
 {
     // This function will be implemented later to load the backup from a file.
     // For now, we will just print a message.
-    printf ( "Loading SMS backup from file: %s (not implemented yet)\n", filename );
+    printf( "Loading SMS backup from file: %s (not implemented yet)\n", filename );
 }
 // Function to clear the SMS backup.
-void clear_sms_backup ( SMS_BACKUP *backup )
+void clear_sms_backup( SMS_BACKUP *backup )
 {
     if ( !backup ) return;
-    free_sms_backup ( backup );
-    backup = init_sms_backup ();
+    free_sms_backup( backup );
+    backup = init_sms_backup( );
     if ( !backup )
     {
-        fprintf ( stderr, "Failed to reinitialize SMS_BACKUP after clearing.\n" );
+        fprintf( stderr, "Failed to reinitialize SMS_BACKUP after clearing.\n" );
     }
 }
 // Function to get the count of SMS items.
-int get_sms_count ( const SMS_BACKUP *backup )
+int get_sms_count( const SMS_BACKUP *backup )
 {
     if ( !backup ) return 0;
     return backup->sms_count;
 }
 // Function to get the count of call items.
-int get_call_count ( const SMS_BACKUP *backup )
+int get_call_count( const SMS_BACKUP *backup )
 {
     if ( !backup ) return 0;
     return backup->call_count;
 }
 // Function to get the count of media items.
-int get_media_count ( const SMS_BACKUP *backup )
+int get_media_count( const SMS_BACKUP *backup )
 {
     if ( !backup ) return 0;
     return backup->media_count;
 }
 // Function to get an SMS item by index.
-SMS_ITEM *get_sms_item ( const SMS_BACKUP *backup, int index )
+SMS_ITEM *get_sms_item( const SMS_BACKUP *backup, int index )
 {
     if ( !backup || index < 0 || index >= backup->sms_count ) return NULL;
-    return &backup->sms_items[index];
+    return &backup->sms_items[ index ];
 }
 // Function to get a call item by index.
-CALL_ITEM *get_call_item ( const SMS_BACKUP *backup, int index )
+CALL_ITEM *get_call_item( const SMS_BACKUP *backup, int index )
 {
     if ( !backup || index < 0 || index >= backup->call_count ) return NULL;
-    return &backup->call_items[index];
+    return &backup->call_items[ index ];
 }
 // Function to get a media item by index.
-MEDIA_ITEM *get_media_item ( const SMS_BACKUP *backup, int index )
+MEDIA_ITEM *get_media_item( const SMS_BACKUP *backup, int index )
 {
     if ( !backup || index < 0 || index >= backup->media_count ) return NULL;
-    return &backup->media_items[index];
+    return &backup->media_items[ index ];
 }
 // Function to find an SMS item by ID.
-SMS_ITEM *find_sms_item_by_id ( const SMS_BACKUP *backup, const char *id )
+SMS_ITEM *find_sms_item_by_id( const SMS_BACKUP *backup, const char *id )
 {
     if ( !backup || !id ) return NULL;
     for ( int i = 0; i < backup->sms_count; i++ )
     {
-        if ( strcmp ( backup->sms_items[i].id, id ) == 0 )
+        if ( strcmp( backup->sms_items[ i ].id, id ) == 0 )
         {
-            return &backup->sms_items[i];
+            return &backup->sms_items[ i ];
         }
     }
     return NULL;
 }
 // Function to find a call item by ID.
-CALL_ITEM *find_call_item_by_id ( const SMS_BACKUP *backup, const char *id )
+CALL_ITEM *find_call_item_by_id( const SMS_BACKUP *backup, const char *id )
 {
     if ( !backup || !id ) return NULL;
     for ( int i = 0; i < backup->call_count; i++ )
     {
-        if ( strcmp ( backup->call_items[i].id, id ) == 0 )
+        if ( strcmp( backup->call_items[ i ].id, id ) == 0 )
         {
-            return &backup->call_items[i];
+            return &backup->call_items[ i ];
         }
     }
     return NULL;
 }
 // Function to find a media item by ID.
-MEDIA_ITEM *find_media_item_by_id ( const SMS_BACKUP *backup, const char *id )
+MEDIA_ITEM *find_media_item_by_id( const SMS_BACKUP *backup, const char *id )
 {
     if ( !backup || !id ) return NULL;
     for ( int i = 0; i < backup->media_count; i++ )
     {
-        if ( strcmp ( backup->media_items[i].id, id ) == 0 )
+        if ( strcmp( backup->media_items[ i ].id, id ) == 0 )
         {
-            return &backup->media_items[i];
+            return &backup->media_items[ i ];
         }
     }
     return NULL;
 }
 // Function to find SMS items by address.
-SMS_ITEM *find_sms_items_by_address ( const SMS_BACKUP *backup, const char *address, int *count )
+SMS_ITEM *find_sms_items_by_address( const SMS_BACKUP *backup, const char *address, int *count )
 {
     if ( !backup || !address || !count ) return NULL;
     *count = 0;
-    SMS_ITEM *results = ( SMS_ITEM * )malloc ( sizeof ( SMS_ITEM ) * backup->sms_count );
+    SMS_ITEM *results = ( SMS_ITEM * )malloc( sizeof( SMS_ITEM ) * backup->sms_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for SMS search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for SMS search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->sms_count; i++ )
     {
-        if ( strcmp ( backup->sms_items[i].address, address ) == 0 )
+        if ( strcmp( backup->sms_items[ i ].address, address ) == 0 )
         {
-            results[*count] = backup->sms_items[i];
-            (*count)++;
+            results[ *count ] = backup->sms_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 
 // Function to find call items by address.
-CALL_ITEM *find_call_items_by_address ( const SMS_BACKUP *backup, const char *address, int *count )
+CALL_ITEM *find_call_items_by_address( const SMS_BACKUP *backup, const char *address, int *count )
 {
     if ( !backup || !address || !count ) return NULL;
     *count = 0;
-    CALL_ITEM *results = ( CALL_ITEM * )malloc ( sizeof ( CALL_ITEM ) * backup->call_count );
+    CALL_ITEM *results = ( CALL_ITEM * )malloc( sizeof( CALL_ITEM ) * backup->call_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for call search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for call search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->call_count; i++ )
     {
-        if ( strcmp ( backup->call_items[i].address, address ) == 0 )
+        if ( strcmp( backup->call_items[ i ].address, address ) == 0 )
         {
-            results[*count] = backup->call_items[i];
-            (*count)++;
+            results[ *count ] = backup->call_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 
 // Function to find media items by address.
-MEDIA_ITEM *find_media_items_by_address ( const SMS_BACKUP *backup, const char *address, int *count )
+MEDIA_ITEM *find_media_items_by_address( const SMS_BACKUP *backup, const char *address, int *count )
 {
     if ( !backup || !address || !count ) return NULL;
     *count = 0;
-    MEDIA_ITEM *results = ( MEDIA_ITEM * )malloc ( sizeof ( MEDIA_ITEM ) * backup->media_count );
+    MEDIA_ITEM *results = ( MEDIA_ITEM * )malloc( sizeof( MEDIA_ITEM ) * backup->media_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for media search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for media search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->media_count; i++ )
     {
-        if ( strcmp ( backup->media_items[i].address, address ) == 0 )
+        if ( strcmp( backup->media_items[ i ].address, address ) == 0 )
         {
-            results[*count] = backup->media_items[i];
-            (*count)++;
+            results[ *count ] = backup->media_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 
 // Function to find SMS items by date range.
-SMS_ITEM *find_sms_items_by_date_range ( const SMS_BACKUP *backup, time_t start_date, time_t end_date, int *count )
+SMS_ITEM *find_sms_items_by_date_range( const SMS_BACKUP *backup, time_t start_date, time_t end_date, int *count )
 {
     if ( !backup || !count ) return NULL;
     *count = 0;
-    SMS_ITEM *results = ( SMS_ITEM * )malloc ( sizeof ( SMS_ITEM ) * backup->sms_count );
+    SMS_ITEM *results = ( SMS_ITEM * )malloc( sizeof( SMS_ITEM ) * backup->sms_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for SMS date range search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for SMS date range search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->sms_count; i++ )
     {
-        if ( backup->sms_items[i].date >= start_date && backup->sms_items[i].date <= end_date )
+        if ( backup->sms_items[ i ].date >= start_date && backup->sms_items[ i ].date <= end_date )
         {
-            results[*count] = backup->sms_items[i];
-            (*count)++;
+            results[ *count ] = backup->sms_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 // Function to find call items by date range.
-CALL_ITEM *find_call_items_by_date_range ( const SMS_BACKUP *backup, time_t start_date, time_t end_date, int *count )
+CALL_ITEM *find_call_items_by_date_range( const SMS_BACKUP *backup, time_t start_date, time_t end_date, int *count )
 {
     if ( !backup || !count ) return NULL;
     *count = 0;
-    CALL_ITEM *results = ( CALL_ITEM * )malloc ( sizeof ( CALL_ITEM ) * backup->call_count );
+    CALL_ITEM *results = ( CALL_ITEM * )malloc( sizeof( CALL_ITEM ) * backup->call_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for call date range search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for call date range search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->call_count; i++ )
     {
-        if ( backup->call_items[i].date >= start_date && backup->call_items[i].date <= end_date )
+        if ( backup->call_items[ i ].date >= start_date && backup->call_items[ i ].date <= end_date )
         {
-            results[*count] = backup->call_items[i];
-            (*count)++;
+            results[ *count ] = backup->call_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 // Function to find media items by date range.
-MEDIA_ITEM *find_media_items_by_date_range ( const SMS_BACKUP *backup, time_t start_date, time_t end_date, int *count )
+MEDIA_ITEM *find_media_items_by_date_range( const SMS_BACKUP *backup, time_t start_date, time_t end_date, int *count )
 {
     if ( !backup || !count ) return NULL;
     *count = 0;
-    MEDIA_ITEM *results = ( MEDIA_ITEM * )malloc ( sizeof ( MEDIA_ITEM ) * backup->media_count );
+    MEDIA_ITEM *results = ( MEDIA_ITEM * )malloc( sizeof( MEDIA_ITEM ) * backup->media_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for media date range search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for media date range search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->media_count; i++ )
     {
-        if ( backup->media_items[i].date >= start_date && backup->media_items[i].date <= end_date )
+        if ( backup->media_items[ i ].date >= start_date && backup->media_items[ i ].date <= end_date )
         {
-            results[*count] = backup->media_items[i];
-            (*count)++;
+            results[ *count ] = backup->media_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 // Function to find SMS items by type.
-SMS_ITEM *find_sms_items_by_type ( const SMS_BACKUP *backup, int type, int *count )
+SMS_ITEM *find_sms_items_by_type( const SMS_BACKUP *backup, int type, int *count )
 {
     if ( !backup || !count ) return NULL;
     *count = 0;
-    SMS_ITEM *results = ( SMS_ITEM * )malloc ( sizeof ( SMS_ITEM ) * backup->sms_count );
+    SMS_ITEM *results = ( SMS_ITEM * )malloc( sizeof( SMS_ITEM ) * backup->sms_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for SMS type search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for SMS type search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->sms_count; i++ )
     {
-        if ( backup->sms_items[i].type == type )
+        if ( backup->sms_items[ i ].type == type )
         {
-            results[*count] = backup->sms_items[i];
-            (*count)++;
+            results[ *count ] = backup->sms_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 // Function to find call items by type.
-CALL_ITEM *find_call_items_by_type ( const SMS_BACKUP *backup, int type, int *count )
+CALL_ITEM *find_call_items_by_type( const SMS_BACKUP *backup, int type, int *count )
 {
     if ( !backup || !count ) return NULL;
     *count = 0;
-    CALL_ITEM *results = ( CALL_ITEM * )malloc ( sizeof ( CALL_ITEM ) * backup->call_count );
+    CALL_ITEM *results = ( CALL_ITEM * )malloc( sizeof( CALL_ITEM ) * backup->call_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for call type search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for call type search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->call_count; i++ )
     {
-        if ( backup->call_items[i].type == type )
+        if ( backup->call_items[ i ].type == type )
         {
-            results[*count] = backup->call_items[i];
-            (*count)++;
+            results[ *count ] = backup->call_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 // Function to find media items by type (not applicable, as media items do not have a type).
-MEDIA_ITEM *find_media_items_by_type ( const SMS_BACKUP *backup, int type, int *count )
+MEDIA_ITEM *find_media_items_by_type( const SMS_BACKUP *backup, int type, int *count )
 {
     // Media items do not have a type field, so we return NULL.
     if ( !backup || !count ) return NULL;
@@ -635,115 +636,115 @@ MEDIA_ITEM *find_media_items_by_type ( const SMS_BACKUP *backup, int type, int *
     return NULL; // No media items by type.
 }
 // Function to find SMS items by address and date range.
-SMS_ITEM *find_sms_items_by_address_and_date_range ( const SMS_BACKUP *backup, const char *address, time_t start_date, time_t end_date, int *count )
+SMS_ITEM *find_sms_items_by_address_and_date_range( const SMS_BACKUP *backup, const char *address, time_t start_date, time_t end_date, int *count )
 {
     if ( !backup || !address || !count ) return NULL;
     *count = 0;
-    SMS_ITEM *results = ( SMS_ITEM * )malloc ( sizeof ( SMS_ITEM ) * backup->sms_count );
+    SMS_ITEM *results = ( SMS_ITEM * )malloc( sizeof( SMS_ITEM ) * backup->sms_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for SMS address and date range search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for SMS address and date range search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->sms_count; i++ )
     {
-        if ( strcmp ( backup->sms_items[i].address, address ) == 0 &&
-             backup->sms_items[i].date >= start_date && backup->sms_items[i].date <= end_date )
+        if ( strcmp( backup->sms_items[ i ].address, address ) == 0 &&
+             backup->sms_items[ i ].date >= start_date && backup->sms_items[ i ].date <= end_date )
         {
-            results[*count] = backup->sms_items[i];
-            (*count)++;
+            results[ *count ] = backup->sms_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 // Function to find call items by address and date range.
-CALL_ITEM *find_call_items_by_address_and_date_range ( const SMS_BACKUP *backup, const char *address, time_t start_date, time_t end_date, int *count )
+CALL_ITEM *find_call_items_by_address_and_date_range( const SMS_BACKUP *backup, const char *address, time_t start_date, time_t end_date, int *count )
 {
     if ( !backup || !address || !count ) return NULL;
     *count = 0;
-    CALL_ITEM *results = ( CALL_ITEM * )malloc ( sizeof ( CALL_ITEM ) * backup->call_count );
+    CALL_ITEM *results = ( CALL_ITEM * )malloc( sizeof( CALL_ITEM ) * backup->call_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for call address and date range search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for call address and date range search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->call_count; i++ )
     {
-        if ( strcmp ( backup->call_items[i].address, address ) == 0 &&
-             backup->call_items[i].date >= start_date && backup->call_items[i].date <= end_date )
+        if ( strcmp( backup->call_items[ i ].address, address ) == 0 &&
+             backup->call_items[ i ].date >= start_date && backup->call_items[ i ].date <= end_date )
         {
-            results[*count] = backup->call_items[i];
-            (*count)++;
+            results[ *count ] = backup->call_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 // Function to find media items by address and date range.
-MEDIA_ITEM *find_media_items_by_address_and_date_range ( const SMS_BACKUP *backup, const char *address, time_t start_date, time_t end_date, int *count )
+MEDIA_ITEM *find_media_items_by_address_and_date_range( const SMS_BACKUP *backup, const char *address, time_t start_date, time_t end_date, int *count )
 {
     if ( !backup || !address || !count ) return NULL;
     *count = 0;
-    MEDIA_ITEM *results = ( MEDIA_ITEM * )malloc ( sizeof ( MEDIA_ITEM ) * backup->media_count );
+    MEDIA_ITEM *results = ( MEDIA_ITEM * )malloc( sizeof( MEDIA_ITEM ) * backup->media_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for media address and date range search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for media address and date range search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->media_count; i++ )
     {
-        if ( strcmp ( backup->media_items[i].address, address ) == 0 &&
-             backup->media_items[i].date >= start_date && backup->media_items[i].date <= end_date )
+        if ( strcmp( backup->media_items[ i ].address, address ) == 0 &&
+             backup->media_items[ i ].date >= start_date && backup->media_items[ i ].date <= end_date )
         {
-            results[*count] = backup->media_items[i];
-            (*count)++;
+            results[ *count ] = backup->media_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 // Function to find SMS items by address and type.
-SMS_ITEM *find_sms_items_by_address_and_type ( const SMS_BACKUP *backup, const char *address, int type, int *count )
+SMS_ITEM *find_sms_items_by_address_and_type( const SMS_BACKUP *backup, const char *address, int type, int *count )
 {
     if ( !backup || !address || !count ) return NULL;
     *count = 0;
-    SMS_ITEM *results = ( SMS_ITEM * )malloc ( sizeof ( SMS_ITEM ) * backup->sms_count );
+    SMS_ITEM *results = ( SMS_ITEM * )malloc( sizeof( SMS_ITEM ) * backup->sms_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for SMS address and type search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for SMS address and type search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->sms_count; i++ )
     {
-        if ( strcmp ( backup->sms_items[i].address, address ) == 0 && backup->sms_items[i].type == type )
+        if ( strcmp( backup->sms_items[ i ].address, address ) == 0 && backup->sms_items[ i ].type == type )
         {
-            results[*count] = backup->sms_items[i];
-            (*count)++;
+            results[ *count ] = backup->sms_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 // Function to find call items by address and type.
-CALL_ITEM *find_call_items_by_address_and_type ( const SMS_BACKUP *backup, const char *address, int type, int *count )
+CALL_ITEM *find_call_items_by_address_and_type( const SMS_BACKUP *backup, const char *address, int type, int *count )
 {
     if ( !backup || !address || !count ) return NULL;
     *count = 0;
-    CALL_ITEM *results = ( CALL_ITEM * )malloc ( sizeof ( CALL_ITEM ) * backup->call_count );
+    CALL_ITEM *results = ( CALL_ITEM * )malloc( sizeof( CALL_ITEM ) * backup->call_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for call address and type search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for call address and type search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->call_count; i++ )
     {
-        if ( strcmp ( backup->call_items[i].address, address ) == 0 && backup->call_items[i].type == type )
+        if ( strcmp( backup->call_items[ i ].address, address ) == 0 && backup->call_items[ i ].type == type )
         {
-            results[*count] = backup->call_items[i];
-            (*count)++;
+            results[ *count ] = backup->call_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 // Function to find media items by address and type (not applicable, as media items do not have a type).
-MEDIA_ITEM *find_media_items_by_address_and_type ( const SMS_BACKUP *backup, const char *address, int type, int *count )
+MEDIA_ITEM *find_media_items_by_address_and_type( const SMS_BACKUP *backup, const char *address, int type, int *count )
 {
     // Media items do not have a type field, so we return NULL.
     if ( !backup || !address || !count ) return NULL;
@@ -751,49 +752,49 @@ MEDIA_ITEM *find_media_items_by_address_and_type ( const SMS_BACKUP *backup, con
     return NULL; // No media items by address and type.
 }
 // Function to find SMS items by date range and type.
-SMS_ITEM *find_sms_items_by_date_range_and_type ( const SMS_BACKUP *backup, time_t start_date, time_t end_date, int type, int *count )
+SMS_ITEM *find_sms_items_by_date_range_and_type( const SMS_BACKUP *backup, time_t start_date, time_t end_date, int type, int *count )
 {
     if ( !backup || !count ) return NULL;
     *count = 0;
-    SMS_ITEM *results = ( SMS_ITEM * )malloc ( sizeof ( SMS_ITEM ) * backup->sms_count );
+    SMS_ITEM *results = ( SMS_ITEM * )malloc( sizeof( SMS_ITEM ) * backup->sms_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for SMS date range and type search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for SMS date range and type search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->sms_count; i++ )
     {
-        if ( backup->sms_items[i].date >= start_date && backup->sms_items[i].date <= end_date && backup->sms_items[i].type == type )
+        if ( backup->sms_items[ i ].date >= start_date && backup->sms_items[ i ].date <= end_date && backup->sms_items[ i ].type == type )
         {
-            results[*count] = backup->sms_items[i];
-            (*count)++;
+            results[ *count ] = backup->sms_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 // Function to find call items by date range and type.
-CALL_ITEM *find_call_items_by_date_range_and_type ( const SMS_BACKUP *backup, time_t start_date, time_t end_date, int type, int *count )
+CALL_ITEM *find_call_items_by_date_range_and_type( const SMS_BACKUP *backup, time_t start_date, time_t end_date, int type, int *count )
 {
     if ( !backup || !count ) return NULL;
     *count = 0;
-    CALL_ITEM *results = ( CALL_ITEM * )malloc ( sizeof ( CALL_ITEM ) * backup->call_count );
+    CALL_ITEM *results = ( CALL_ITEM * )malloc( sizeof( CALL_ITEM ) * backup->call_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for call date range and type search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for call date range and type search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->call_count; i++ )
     {
-        if ( backup->call_items[i].date >= start_date && backup->call_items[i].date <= end_date && backup->call_items[i].type == type )
+        if ( backup->call_items[ i ].date >= start_date && backup->call_items[ i ].date <= end_date && backup->call_items[ i ].type == type )
         {
-            results[*count] = backup->call_items[i];
-            (*count)++;
+            results[ *count ] = backup->call_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 // Function to find media items by date range and type (not applicable, as media items do not have a type).
-MEDIA_ITEM *find_media_items_by_date_range_and_type ( const SMS_BACKUP *backup, time_t start_date, time_t end_date, int type, int *count )
+MEDIA_ITEM *find_media_items_by_date_range_and_type( const SMS_BACKUP *backup, time_t start_date, time_t end_date, int type, int *count )
 {
     // Media items do not have a type field, so we return NULL.
     if ( !backup || !count ) return NULL;
@@ -801,53 +802,53 @@ MEDIA_ITEM *find_media_items_by_date_range_and_type ( const SMS_BACKUP *backup, 
     return NULL; // No media items by date range and type.
 }
 // Function to find SMS items by address, date range, and type.
-SMS_ITEM *find_sms_items_by_address_date_range_and_type ( const SMS_BACKUP *backup, const char *address, time_t start_date, time_t end_date, int type, int *count )
+SMS_ITEM *find_sms_items_by_address_date_range_and_type( const SMS_BACKUP *backup, const char *address, time_t start_date, time_t end_date, int type, int *count )
 {
     if ( !backup || !address || !count ) return NULL;
     *count = 0;
-    SMS_ITEM *results = ( SMS_ITEM * )malloc ( sizeof ( SMS_ITEM ) * backup->sms_count );
+    SMS_ITEM *results = ( SMS_ITEM * )malloc( sizeof( SMS_ITEM ) * backup->sms_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for SMS address, date range, and type search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for SMS address, date range, and type search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->sms_count; i++ )
     {
-        if ( strcmp ( backup->sms_items[i].address, address ) == 0 &&
-             backup->sms_items[i].date >= start_date && backup->sms_items[i].date <= end_date &&
-             backup->sms_items[i].type == type )
+        if ( strcmp( backup->sms_items[ i ].address, address ) == 0 &&
+             backup->sms_items[ i ].date >= start_date && backup->sms_items[ i ].date <= end_date &&
+             backup->sms_items[ i ].type == type )
         {
-            results[*count] = backup->sms_items[i];
-            (*count)++;
+            results[ *count ] = backup->sms_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 // Function to find call items by address, date range, and type.
-CALL_ITEM *find_call_items_by_address_date_range_and_type ( const SMS_BACKUP *backup, const char *address, time_t start_date, time_t end_date, int type, int *count )
+CALL_ITEM *find_call_items_by_address_date_range_and_type( const SMS_BACKUP *backup, const char *address, time_t start_date, time_t end_date, int type, int *count )
 {
     if ( !backup || !address || !count ) return NULL;
     *count = 0;
-    CALL_ITEM *results = ( CALL_ITEM * )malloc ( sizeof ( CALL_ITEM ) * backup->call_count );
+    CALL_ITEM *results = ( CALL_ITEM * )malloc( sizeof( CALL_ITEM ) * backup->call_count );
     if ( !results )
     {
-        fprintf ( stderr, "Failed to allocate memory for call address, date range, and type search results.\n" );
+        fprintf( stderr, "Failed to allocate memory for call address, date range, and type search results.\n" );
         return NULL;
     }
     for ( int i = 0; i < backup->call_count; i++ )
     {
-        if ( strcmp ( backup->call_items[i].address, address ) == 0 &&
-             backup->call_items[i].date >= start_date && backup->call_items[i].date <= end_date &&
-             backup->call_items[i].type == type )
+        if ( strcmp( backup->call_items[ i ].address, address ) == 0 &&
+             backup->call_items[ i ].date >= start_date && backup->call_items[ i ].date <= end_date &&
+             backup->call_items[ i ].type == type )
         {
-            results[*count] = backup->call_items[i];
-            (*count)++;
+            results[ *count ] = backup->call_items[ i ];
+            ( *count )++;
         }
     }
     return results;
 }
 // Function to find media items by address, date range, and type (not applicable, as media items do not have a type).
-MEDIA_ITEM *find_media_items_by_address_date_range_and_type ( const SMS_BACKUP *backup, const char *address, time_t start_date, time_t end_date, int type, int *count )
+MEDIA_ITEM *find_media_items_by_address_date_range_and_type( const SMS_BACKUP *backup, const char *address, time_t start_date, time_t end_date, int type, int *count )
 {
     // Media items do not have a type field, so we return NULL.
     if ( !backup || !address || !count ) return NULL;
@@ -858,14 +859,14 @@ MEDIA_ITEM *find_media_items_by_address_date_range_and_type ( const SMS_BACKUP *
 
 
 
-void GiveError ( char *wrong, BOOL KillProcess )
+void GiveError( char *wrong, BOOL KillProcess )
 {
     if ( wrong == NULL )
     {
-        MessageBox ( GetFocus (), "An unknown error has occured, please restart BioMud and try again.", "BioMud Error", MB_ICONSTOP | MB_OK );
+        MessageBox( GetFocus( ), ( LPCWSTR )"An unknown error has occured, please restart BioMud and try again.", ( LPCWSTR )"BioMud Error", MB_ICONSTOP | MB_OK );
         if ( KillProcess )
         {
-            exit ( 0 );
+            exit( 0 );
         }
         else
         {
@@ -873,11 +874,11 @@ void GiveError ( char *wrong, BOOL KillProcess )
         }
     }
 
-    MessageBox ( GetFocus (), wrong, "BioMUD Error", MB_ICONSTOP | MB_OK );
+    MessageBox( GetFocus( ), ( LPCWSTR )wrong, ( LPCWSTR )"Nano-SMS Error", MB_ICONSTOP | MB_OK );
 
     if ( KillProcess )
     {
-        exit ( 0 );
+        exit( 0 );
     }
     else
     {
@@ -886,10 +887,10 @@ void GiveError ( char *wrong, BOOL KillProcess )
 }
 
 
-                 
-    
 
-    
+
+
+
 
 
 

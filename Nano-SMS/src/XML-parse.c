@@ -46,27 +46,22 @@
     */
 
 
-
+#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <windows.h>
+
 #include <math.h>
 #include <sys/types.h>
 #include <time.h>
-#include <winsock.h>
-#include <richedit.h>
-#include <assert.h>
-#include <uxtheme.h>
-#include <commctrl.h>
-#include "stdbool.h"
+
 
 #include "nano-sms.h"
-#include "sqlite3/sqlite3.h"
-#include "NWC.h"
-#include "sms_db.h"
 #include "XML.h"
+#include "sms_db.h" 
 #include "nano-io.h"
+#include "sqlite3/sqlite3.h"
+
 
 
 // I know this is a lot of 'global' variables, but this is a simple
@@ -102,7 +97,7 @@ static BOOL xml_in_doctype = FALSE;
 static BOOL xml_in_entity = FALSE;
 static BOOL xml_in_processing = FALSE;
 static char *xml_current_tag = NULL; // Dynamically allocated. Grown; never shrunken.
-static int xml_tag_malloc_add = 256 * sizeof ( char ); // Allocate in chunks of 256 bytes. For all buffers.
+static int xml_tag_malloc_add = 256 * sizeof( char ); // Allocate in chunks of 256 bytes. For all buffers.
 static char *xml_attr = NULL; // Dynamically allocated. Grown; never shrunken.
 static char *xml_value = NULL; // Dynamically allocated. Grown; never shrunken.
 static char *xml_comment = NULL; // Dynamically allocated. Grown; never shrunken.
@@ -186,15 +181,15 @@ static size_t xml_processing_len = 0; // Length of processing buffer.
     * @param backup: pointer to the SMS_BACKUP structure to populate
     * @return: 1 on success, -1 on failure
     */
-SMS_BACKUP *XML_new ( void )
+SMS_BACKUP *XML_new( void )
 {
-    SMS_BACKUP *backup = ( SMS_BACKUP * )malloc ( sizeof ( SMS_BACKUP ) );
+    SMS_BACKUP *backup = ( SMS_BACKUP * )malloc( sizeof( SMS_BACKUP ) );
     if ( !backup )
     {
-        fprintf ( stderr, "Failed to allocate memory for SMS_BACKUP structure\n" );
+        fprintf( stderr, "Failed to allocate memory for SMS_BACKUP structure\n" );
         return NULL;
     }
-    memset ( backup, 0, sizeof ( SMS_BACKUP ) );
+    memset( backup, 0, sizeof( SMS_BACKUP ) );
     return backup;
 }
 
@@ -203,18 +198,18 @@ SMS_BACKUP *XML_new ( void )
  * @param current_len: pointer to the current length of the buffer
  * @return: pointer to the grown buffer, or NULL on failure
  */
-char *xml_grow_buffer ( char **buffer, size_t *current_len )
+char *xml_grow_buffer( char **buffer, size_t *current_len )
 {
     if ( !buffer || !current_len ) return NULL;
     size_t new_len = *current_len + xml_tag_malloc_add;
-    char *new_buffer = ( char * )realloc ( *buffer, new_len );
+    char *new_buffer = ( char * )realloc( *buffer, new_len );
     if ( !new_buffer )
     {
-        fprintf ( stderr, "Failed to allocate memory for XML buffer\n" );
+        fprintf( stderr, "Failed to allocate memory for XML buffer\n" );
         return NULL;
     }
     *buffer = new_buffer;
-    memset ( *buffer + *current_len, 0, xml_tag_malloc_add ); // Zero out the new memory.
+    memset( *buffer + *current_len, 0, xml_tag_malloc_add ); // Zero out the new memory.
     *current_len = new_len;
     return *buffer;
 }
@@ -222,39 +217,39 @@ char *xml_grow_buffer ( char **buffer, size_t *current_len )
 /* Function to free the memory allocated for the SMS_BACKUP structure
  * @param backup: pointer to the SMS_BACKUP structure to free
  */
-int XML_free ( SMS_BACKUP *backup )
+int XML_free( SMS_BACKUP *backup )
 {
     if ( backup )
     {
         if ( backup->sms_items )
         {
-            free ( backup->sms_items );
+            free( backup->sms_items );
             backup->sms_items = NULL;
         }
         if ( backup->call_items )
         {
-            free ( backup->call_items );
+            free( backup->call_items );
             backup->call_items = NULL;
         }
         if ( backup->media_items )
         {
-            free ( backup->media_items );
+            free( backup->media_items );
             backup->media_items = NULL;
         }
-        free ( backup );
+        free( backup );
     }
     return 1;
 }
 
-int XML_Snarf ( const char *filename, SMS_BACKUP *backup )
+int XML_Snarf( const char *filename, SMS_BACKUP *backup )
 {
-    FILE *file = fopen ( filename, "r" );
+    FILE *file = fopen( filename, "r" );
     if ( !file )
     {
-        fprintf ( stderr, "Failed to open file: %s\n", filename );
+        fprintf( stderr, "Failed to open file: %s\n", filename );
         return -1;
     }
-    fclose ( file );
+    fclose( file );
     return 1;
 }
 /* Function to free the memory allocated for the SMS_BACKUP structure

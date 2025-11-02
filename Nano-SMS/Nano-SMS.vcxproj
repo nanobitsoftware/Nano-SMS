@@ -45,7 +45,8 @@
     <CharacterSet>Unicode</CharacterSet>
     <EnableUnitySupport>false</EnableUnitySupport>
     <PlatformToolset>v143</PlatformToolset>
-    <VCToolsVersion>14.44.35207</VCToolsVersion>
+    <VCToolsVersion>
+    </VCToolsVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -74,9 +75,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <UseStructuredOutput>false</UseStructuredOutput>
+    <UseStructuredOutput>true</UseStructuredOutput>
     <ExecutablePath>$(VC_ExecutablePath_x64);$(CommonExecutablePath);</ExecutablePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);</LibraryPath>
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <UseStructuredOutput>false</UseStructuredOutput>
@@ -111,41 +113,49 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions> _CRT_SECURE_NO_WARNINGS;</PreprocessorDefinitions>
-      <ConformanceMode>false</ConformanceMode>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
-      <ExceptionHandling>false</ExceptionHandling>
-      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <EnableParallelCodeGeneration>
+      </EnableParallelCodeGeneration>
       <EnableVectorLength>VectorLength256</EnableVectorLength>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <CompileAs>CompileAsC</CompileAs>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <CallingConvention>FastCall</CallingConvention>
+      <CallingConvention>StdCall</CallingConvention>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <StructMemberAlignment>16Bytes</StructMemberAlignment>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <StructMemberAlignment>Default</StructMemberAlignment>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <RemoveUnreferencedCodeData>true</RemoveUnreferencedCodeData>
-      <UseFullPaths>false</UseFullPaths>
+      <UseFullPaths>true</UseFullPaths>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
       <ControlFlowGuard>false</ControlFlowGuard>
       <CreateHotpatchableImage>false</CreateHotpatchableImage>
       <PrecompiledHeaderFile />
       <ShowIncludes>false</ShowIncludes>
-      <ExpandAttributedSource>true</ExpandAttributedSource>
+      <ExpandAttributedSource>false</ExpandAttributedSource>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <MinimalRebuild>false</MinimalRebuild>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <UseDynamicDebugging>false</UseDynamicDebugging>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+      <DiagnosticsFormat>Classic</DiagnosticsFormat>
+      <DisableSpecificWarnings>5105</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <UACUIAccess>false</UACUIAccess>
       <EnableUAC>false</EnableUAC>
+      <AllowIsolation>false</AllowIsolation>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -192,6 +202,7 @@
     <ClInclude Include="src\nano-io.h" />
     <ClInclude Include="src\nano-sms.h" />
     <ClInclude Include="src\NWC.h" />
+    <ClInclude Include="src\sms-language.h" />
     <ClInclude Include="src\sms_db.h" />
     <ClInclude Include="src\sqlite3\sqlite3.h" />
     <ClInclude Include="src\XML.h" />

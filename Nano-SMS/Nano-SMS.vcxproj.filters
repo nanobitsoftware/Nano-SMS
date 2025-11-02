@@ -18,9 +18,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\NWC_main.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\nano-sms.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -48,6 +45,9 @@
     <ClCompile Include="src\nano-io.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\NWC_main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\NWC.h">
@@ -66,6 +66,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\nano-io.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sms-language.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

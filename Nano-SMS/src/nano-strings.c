@@ -26,11 +26,12 @@ specific file that theyre in a the time.
 
  */
 
+#include <windows.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <windows.h>
+
 #include <math.h>
 #include <sys/types.h>
 #include <time.h>
@@ -52,7 +53,7 @@ specific file that theyre in a the time.
 #include "nano-sms.h"
 
 
-char str_empty[1];
+char str_empty[ 1 ];
 char *string_space;
 char *top_string;
 #undef strdup
@@ -60,7 +61,7 @@ char *top_string;
 #define MAX_BUF 512
 #define MAX_CHAR_COL 74
 
-int str_isnumber ( const char *s );
+int str_isnumber( const char *s );
 
 #define is_number(x) str_isnumber(x)
 #define is_number2(x) str_isnumber(x)
@@ -73,11 +74,11 @@ int str_isnumber ( const char *s );
  *
  * Returns the rounded value.
  */
-double fround ( double f )
+double fround( double f )
 {
     f *= 100;
     f += 0.5;
-    f = ( float )(( int )f);
+    f = ( float )( ( int )f );
     f /= 100;
 
     return f;
@@ -91,20 +92,20 @@ double fround ( double f )
  *
  * Returns a pointer to the duplicated string, or NULL on failure.
  */
-char *str_dup1 ( const char *str, char *file, int line )
+char *str_dup1( const char *str, char *file, int line )
 {
     char *result;
 
     if ( !str )
         return NULL;
 
-    result = ( char * )nano_malloc ( (( int )strlen ( str ) + 10) * sizeof ( char * ), file, line );
+    result = ( char * )nano_malloc( ( ( int )strlen( str ) + 10 ) * sizeof( char * ), file, line );
     if ( result == ( char * )0 )
     {
-        free ( result );
+        free( result );
         return ( char * )0;
     }
-    strcpy ( result, str );
+    strcpy( result, str );
     return result;
 }
 
@@ -114,7 +115,7 @@ char *str_dup1 ( const char *str, char *file, int line )
  *
  * Returns TRUE if both are found, FALSE otherwise.
  */
-BOOL str_search ( const char *str )
+BOOL str_search( const char *str )
 {
     const char *point = str;
     BOOL efound = FALSE;
@@ -142,7 +143,7 @@ BOOL str_search ( const char *str )
  *
  * Returns the index, or 0 if not found.
  */
-int str_ret ( const char *str )
+int str_ret( const char *str )
 {
     const char *point = str;
     int i;
@@ -158,10 +159,10 @@ int str_ret ( const char *str )
  * strip_junk - Removes all '\033' characters from a string.
  * @str: The string to modify.
  */
-void strip_junk ( char *str )
+void strip_junk( char *str )
 {
     const char *point;
-    char fleh[8000] = "";
+    char fleh[ 8000 ] = "";
     char *buf;
     buf = fleh;
 
@@ -188,16 +189,16 @@ void strip_junk ( char *str )
  *
  * Returns TRUE if not a prefix, FALSE if prefix matches.
  */
-BOOL strprefix1 ( const char *astr, const char *bstr )
+BOOL strprefix1( const char *astr, const char *bstr )
 {
     if ( astr == NULL )
         return TRUE;
     if ( bstr == NULL )
         return TRUE;
 
-    for ( ; (*astr || *bstr) && *bstr != '\0'; astr++, bstr++ )
+    for ( ; ( *astr || *bstr ) && *bstr != '\0'; astr++, bstr++ )
     {
-        if ( LOWER ( *bstr ) != LOWER ( *astr ) )
+        if ( LOWER( *bstr ) != LOWER( *astr ) )
             return TRUE;
     }
 
@@ -211,11 +212,11 @@ BOOL strprefix1 ( const char *astr, const char *bstr )
  *
  * Returns pointer to the remainder of the string.
  */
-char *one_argument ( char *argument, char *arg_first )
+char *one_argument( char *argument, char *arg_first )
 {
     char c;
 
-    while ( isspace ( *argument ) )
+    while ( isspace( *argument ) )
         argument++;
 
     c = ' ';
@@ -229,13 +230,13 @@ char *one_argument ( char *argument, char *arg_first )
             argument++;
             break;
         }
-        *arg_first = LOWER ( *argument );
+        *arg_first = LOWER( *argument );
         arg_first++;
         argument++;
     }
     *arg_first = '\0';
 
-    while ( isspace ( *argument ) )
+    while ( isspace( *argument ) )
         argument++;
 
     return argument;
@@ -248,11 +249,11 @@ char *one_argument ( char *argument, char *arg_first )
  *
  * Returns pointer to the remainder of the string.
  */
-char *script_strip ( char *argument, char *arg_first )
+char *script_strip( char *argument, char *arg_first )
 {
     char cEnd;
 
-    while ( isspace ( *argument ) )
+    while ( isspace( *argument ) )
         argument++;
 
     cEnd = '{';
@@ -273,7 +274,7 @@ char *script_strip ( char *argument, char *arg_first )
     }
     *arg_first = '\0';
 
-    while ( isspace ( *argument ) )
+    while ( isspace( *argument ) )
         argument++;
     while ( *argument == '{' || *argument == '}' )
         argument++;
@@ -288,7 +289,7 @@ char *script_strip ( char *argument, char *arg_first )
  *
  * Returns TRUE if pattern is found, FALSE otherwise.
  */
-BOOL simple_str_match ( char *input, char *pattern )
+BOOL simple_str_match( char *input, char *pattern )
 {
     char *inputPtr = input;
     char *whereInput = input;
@@ -325,63 +326,63 @@ BOOL simple_str_match ( char *input, char *pattern )
  *
  * Returns pointer to the formatted string.
  */
-char *commaize ( unsigned long long int x, char buf[] )
+char *commaize( unsigned long long int x, char buf[] )
 {
     static char *to_ret = NULL;
-    char temp[1024] = "";
+    char temp[ 1024 ] = "";
     char *point = temp;
     int i, c, f = 0;
-    buf[0] = '\0';
+    buf[ 0 ] = '\0';
 
-    temp[0] = '\0';
-    sprintf ( temp, "%llu", x );
+    temp[ 0 ] = '\0';
+    sprintf( temp, "%llu", x );
 
     to_ret = temp;
 
     if ( x <= 999 )
     {
-        buf[0] = '\0';
-        sprintf ( &buf[0], "%llu", x );
-        return &buf[0];
+        buf[ 0 ] = '\0';
+        sprintf( &buf[ 0 ], "%llu", x );
+        return &buf[ 0 ];
     }
     else if ( x > 999 )
     {
-        point += ( int )strlen ( temp );
+        point += ( int )strlen( temp );
 
         if ( !*--point )
             return to_ret;
-        i = ( int )( int )strlen ( temp ) - 1;
+        i = ( int )( int )strlen( temp ) - 1;
         c = i / 3;
         i += c;
-        temp[i + c + 1] = '\0';
+        temp[ i + c + 1 ] = '\0';
 
         for ( ; *point; point--, i-- )
         {
             if ( i < 0 )
             {
-                buf[0] = '\0';
-                strcat ( buf, temp );
+                buf[ 0 ] = '\0';
+                strcat( buf, temp );
                 return to_ret;
             }
             if ( f == 3 )
             {
                 f = 0;
-                temp[i] = ',';
+                temp[ i ] = ',';
                 *++point;
                 continue;
             }
 
-            temp[i] = *point;
+            temp[ i ] = *point;
             f++;
         }
 
         to_ret = temp;
-        buf[0] = '\0';
-        strcat ( buf, temp );
-        return &buf[0];
+        buf[ 0 ] = '\0';
+        strcat( buf, temp );
+        return &buf[ 0 ];
     }
 
-    return &buf[0];
+    return &buf[ 0 ];
 }
 
 /**
@@ -391,7 +392,7 @@ char *commaize ( unsigned long long int x, char buf[] )
  *
  * Returns TRUE if strings differ, FALSE if equal.
  */
-BOOL string_compare ( const char *ostr, const char *tstr )
+BOOL string_compare( const char *ostr, const char *tstr )
 {
     if ( ostr == NULL || tstr == NULL )
     {
@@ -399,7 +400,7 @@ BOOL string_compare ( const char *ostr, const char *tstr )
     }
     for ( ; *ostr || *tstr; ostr++, tstr++ )
     {
-        if ( LOWER ( *ostr ) != LOWER ( *tstr ) )
+        if ( LOWER( *ostr ) != LOWER( *tstr ) )
             return TRUE;
     }
     return FALSE;
@@ -410,15 +411,15 @@ BOOL string_compare ( const char *ostr, const char *tstr )
  *
  * Returns pointer to the static date string.
  */
-char *get_date ( void )
+char *get_date( void )
 {
     time_t t;
     struct tm *t_m;
-    static char d[1024];
-    t = time ( NULL );
-    t_m = localtime ( &t );
-    sprintf ( d, "%2.2d/%2.2d/%d %2.2d:%2.2d%s", t_m->tm_mon + 1, t_m->tm_mday, t_m->tm_year + 1900, t_m->tm_hour == 0 ? 12 : (t_m->tm_hour) > 12 ? (t_m->tm_hour) - 12 : (t_m->tm_hour), t_m->tm_min,
-              (t_m->tm_hour) > 12 ? "pm" : "am" );
+    static char d[ 1024 ];
+    t = time( NULL );
+    t_m = localtime( &t );
+    sprintf( d, "%2.2d/%2.2d/%d %2.2d:%2.2d%s", t_m->tm_mon + 1, t_m->tm_mday, t_m->tm_year + 1900, t_m->tm_hour == 0 ? 12 : ( t_m->tm_hour ) > 12 ? ( t_m->tm_hour ) - 12 : ( t_m->tm_hour ), t_m->tm_min,
+             ( t_m->tm_hour ) > 12 ? "pm" : "am" );
     return d;
 }
 
@@ -427,14 +428,14 @@ char *get_date ( void )
  *
  * Returns pointer to the static date string.
  */
-char *get_date_notime ( void )
+char *get_date_notime( void )
 {
     time_t t;
     struct tm *t_m;
-    static char d[1024];
-    t = time ( NULL );
-    t_m = localtime ( &t );
-    sprintf ( d, "%2.2d/%2.2d/%d", t_m->tm_mon + 1, t_m->tm_mday, t_m->tm_year + 1900 );
+    static char d[ 1024 ];
+    t = time( NULL );
+    t_m = localtime( &t );
+    sprintf( d, "%2.2d/%2.2d/%d", t_m->tm_mon + 1, t_m->tm_mday, t_m->tm_year + 1900 );
     return d;
 }
 
@@ -444,7 +445,7 @@ char *get_date_notime ( void )
  *
  * Returns pointer to the wrapped string.
  */
-char *make_to_col ( char *str )
+char *make_to_col( char *str )
 {
     char *tmp_str;
     unsigned long int i;
@@ -456,16 +457,16 @@ char *make_to_col ( char *str )
     if ( !str )
         return NULL;
 
-    if ( ( int )strlen ( str ) <= MAX_CHAR_COL )
+    if ( ( int )strlen( str ) <= MAX_CHAR_COL )
         return str;
 
-    i = ( int )strlen ( str );
-    i = (i + (i / 2));
+    i = ( int )strlen( str );
+    i = ( i + ( i / 2 ) );
     if ( i < 1 )
         i = 2;
-    if ( i > ( int )strlen ( str ) )
-        i = (( int )strlen ( str ) * 2);
-    tmp_str = malloc ( sizeof ( char * ) * i );
+    if ( i > ( int )strlen( str ) )
+        i = ( ( int )strlen( str ) * 2 );
+    tmp_str = malloc( sizeof( char * ) * i );
 
     last_space = NULL;
     i = 0;
@@ -487,8 +488,8 @@ char *make_to_col ( char *str )
             if ( last_space == NULL )
             {
                 // break at the line anyways.
-                tmp_str[i] = '\n';
-                tmp_str[i + 1] = '\0';
+                tmp_str[ i ] = '\n';
+                tmp_str[ i + 1 ] = '\0';
                 i = i + 1;
                 x = 0;
                 point--;
@@ -497,8 +498,8 @@ char *make_to_col ( char *str )
             }
             else
             {
-                tmp_str[i_space] = '\n';
-                tmp_str[i_space + 1] = '\0';
+                tmp_str[ i_space ] = '\n';
+                tmp_str[ i_space + 1 ] = '\0';
                 i = i_space + 1;
                 x = 0;
 
@@ -507,8 +508,8 @@ char *make_to_col ( char *str )
             }
             continue;
         }
-        tmp_str[i] = *point;
-        tmp_str[i + 1] = '\0';
+        tmp_str[ i ] = *point;
+        tmp_str[ i + 1 ] = '\0';
         i++;
         x++;
         if ( *point == '\b' || *point == '\033' || *point == '\032' )
@@ -527,7 +528,7 @@ char *make_to_col ( char *str )
  *
  * Returns pointer to the wrapped string.
  */
-char *make_to_page ( char *str )
+char *make_to_page( char *str )
 {
     char *tmp_str;
     unsigned long int i;
@@ -539,16 +540,16 @@ char *make_to_page ( char *str )
     if ( !str )
         return NULL;
 
-    if ( ( int )strlen ( str ) <= 90 )
+    if ( ( int )strlen( str ) <= 90 )
         return str;
 
-    i = ( int )strlen ( str );
-    i = (i + (i / 2));
+    i = ( int )strlen( str );
+    i = ( i + ( i / 2 ) );
     if ( i < 1 )
         i = 2;
-    if ( i > ( int )strlen ( str ) )
-        i = (( int )strlen ( str ) * 2);
-    tmp_str = malloc ( sizeof ( char * ) * i );
+    if ( i > ( int )strlen( str ) )
+        i = ( ( int )strlen( str ) * 2 );
+    tmp_str = malloc( sizeof( char * ) * i );
 
     last_space = NULL;
     i = 0;
@@ -570,8 +571,8 @@ char *make_to_page ( char *str )
             if ( last_space == NULL )
             {
                 // break at the line anyways.
-                tmp_str[i] = '\n';
-                tmp_str[i + 1] = '\0';
+                tmp_str[ i ] = '\n';
+                tmp_str[ i + 1 ] = '\0';
                 i = i + 1;
                 x = 0;
                 point--;
@@ -580,8 +581,8 @@ char *make_to_page ( char *str )
             }
             else
             {
-                tmp_str[i_space] = '\n';
-                tmp_str[i_space + 1] = '\0';
+                tmp_str[ i_space ] = '\n';
+                tmp_str[ i_space + 1 ] = '\0';
                 i = i_space + 1;
                 x = 0;
 
@@ -590,8 +591,8 @@ char *make_to_page ( char *str )
             }
             continue;
         }
-        tmp_str[i] = *point;
-        tmp_str[i + 1] = '\0';
+        tmp_str[ i ] = *point;
+        tmp_str[ i + 1 ] = '\0';
         i++;
         x++;
         if ( *point == '\b' || *point == '\033' || *point == '\032' )
@@ -610,7 +611,7 @@ char *make_to_page ( char *str )
  *
  * Returns the number of lines.
  */
-int count_lines ( char *str )
+int count_lines( char *str )
 {
     char *point;
     int len;
@@ -625,7 +626,7 @@ int count_lines ( char *str )
         if ( *point == '\n' )
             len++;
     }
-    return len == 0 ? 1 : (len + 1);
+    return len == 0 ? 1 : ( len + 1 );
 }
 
 /**
@@ -634,9 +635,9 @@ int count_lines ( char *str )
  *
  * Returns TRUE if valid date, FALSE otherwise.
  */
-BOOL is_date ( char *range )
+BOOL is_date( char *range )
 {
-    char str[1024];
+    char str[ 1024 ];
     char delim[] = "/";
     char *token;
     BOOL correct_date;
@@ -646,43 +647,43 @@ BOOL is_date ( char *range )
     if ( !range )
         return FALSE;
 
-    sprintf ( str, "%s", range );
+    sprintf( str, "%s", range );
 
-    token = strtok ( str, delim );
+    token = strtok( str, delim );
 
-    if ( (token) && !is_number ( token ) )
+    if ( ( token ) && !is_number( token ) )
         correct_date = FALSE;
 
     if ( !token )
         correct_date = FALSE;
 
-    if ( (token) && ( int )strlen ( token ) > 2 || ( int )strlen ( token ) < 2 )
+    if ( ( token ) && ( int )strlen( token ) > 2 || ( int )strlen( token ) < 2 )
         correct_date = FALSE;
 
-    if ( atoi ( token ) > 12 )
+    if ( atoi( token ) > 12 )
         correct_date = FALSE;
 
-    token = strtok ( NULL, delim );
+    token = strtok( NULL, delim );
     if ( !token )
         correct_date = FALSE;
-    if ( !(token) && is_number2 ( token ) )
+    if ( !( token ) && is_number2( token ) )
         correct_date = FALSE;
 
-    if ( (token) && ( int )strlen ( token ) > 2 || ( int )strlen ( token ) < 2 )
+    if ( ( token ) && ( int )strlen( token ) > 2 || ( int )strlen( token ) < 2 )
         correct_date = FALSE;
 
-    if ( atoi ( token ) > 31 )
+    if ( atoi( token ) > 31 )
         correct_date = FALSE;
 
-    token = strtok ( NULL, delim );
+    token = strtok( NULL, delim );
     if ( !token )
         correct_date = FALSE;
-    if ( (token) && !is_number2 ( token ) )
+    if ( ( token ) && !is_number2( token ) )
         correct_date = FALSE;
 
-    if ( (token) && ( int )strlen ( token ) > 4 || ( int )strlen ( token ) < 4 )
+    if ( ( token ) && ( int )strlen( token ) > 4 || ( int )strlen( token ) < 4 )
         correct_date = FALSE;
-    if ( atoi ( token ) > 2500 || atoi ( token ) < 1950 )
+    if ( atoi( token ) > 2500 || atoi( token ) < 1950 )
         correct_date = FALSE;
 
     return correct_date;
@@ -692,21 +693,21 @@ BOOL is_date ( char *range )
  * write_buffer - Writes a string to the debug file.
  * @str: The string to write.
  */
-void write_buffer ( const char *str )
+void write_buffer( const char *str )
 {
     FILE *fp;
 
     if ( str == NULL )
         return;
 
-    if ( (fp = fopen ( DEBUG_FILE, "a" )) == NULL )
+    if ( ( fp = fopen( DEBUG_FILE, "a" ) ) == NULL )
     {
-        GiveError ( "Unable to open debug file. Please restart with debugging support off.", FALSE );
+        GiveError( "Unable to open debug file. Please restart with debugging support off.", FALSE );
         return;
     }
 
-    fprintf ( fp, "%s\n", str );
-    fclose ( fp );
+    fprintf( fp, "%s\n", str );
+    fclose( fp );
 }
 
 /**
@@ -716,7 +717,7 @@ void write_buffer ( const char *str )
  *
  * Returns the length of the string read, or EOF on error.
  */
-int read_string ( char buf[], FILE *fp )
+int read_string( char buf[], FILE *fp )
 {
     int c;
     int len = 0;
@@ -725,17 +726,17 @@ int read_string ( char buf[], FILE *fp )
         return -1;
     len = 0;
     f = 0;
-    while ( !feof ( fp ) )
+    while ( !feof( fp ) )
     {
         f++;
-        c = getc ( fp );
+        c = getc( fp );
         if ( c == '\0' )
             return len;
         if ( c == '\n' )
             return len;
         if ( c == '\r' )
             return len;
-        buf[len++] = c;
+        buf[ len++ ] = c;
     }
     return EOF;
 }
@@ -747,17 +748,17 @@ int read_string ( char buf[], FILE *fp )
  *
  * Returns the new length after trimming.
  */
-int str_lefttrim ( char *str, int len )
+int str_lefttrim( char *str, int len )
 {
     int i, j;
     if ( len <= 0 || str == NULL )
         return 0;
-    for ( i = 0; i < len && isspace ( str[i] ); i++ );
+    for ( i = 0; i < len && isspace( str[ i ] ); i++ );
     if ( i == 0 )
         return len;
     for ( j = 0; j < len - i; j++ )
-        str[j] = str[j + i];
-    str[j] = '\0';
+        str[ j ] = str[ j + i ];
+    str[ j ] = '\0';
     return len - i;
 }
 
@@ -768,13 +769,13 @@ int str_lefttrim ( char *str, int len )
  *
  * Returns the new length after trimming.
  */
-int str_righttrim ( char *str, int len )
+int str_righttrim( char *str, int len )
 {
     int i;
     if ( len <= 0 || str == NULL )
         return 0;
-    for ( i = len - 1; i >= 0 && isspace ( str[i] ); i-- );
-    str[i + 1] = '\0';
+    for ( i = len - 1; i >= 0 && isspace( str[ i ] ); i-- );
+    str[ i + 1 ] = '\0';
     return i + 1;
 }
 
@@ -785,10 +786,10 @@ int str_righttrim ( char *str, int len )
  *
  * Returns the new length after trimming.
  */
-int str_trim ( char *str, int len )
+int str_trim( char *str, int len )
 {
-    len = str_righttrim ( str, len );
-    len = str_lefttrim ( str, len );
+    len = str_righttrim( str, len );
+    len = str_lefttrim( str, len );
     return len;
 }
 
@@ -798,12 +799,12 @@ int str_trim ( char *str, int len )
  *
  * Returns 1 if conversion occurred, 0 otherwise.
  */
-int str_upper ( char *str )
+int str_upper( char *str )
 {
     if ( str == NULL )
         return 0;
-    if ( str[0] >= 'a' && str[0] <= 'z' )
-        str[0] = str[0] - ('a' - 'A');
+    if ( str[ 0 ] >= 'a' && str[ 0 ] <= 'z' )
+        str[ 0 ] = str[ 0 ] - ( 'a' - 'A' );
     return 1;
 }
 
@@ -813,12 +814,12 @@ int str_upper ( char *str )
  *
  * Returns 1 if conversion occurred, 0 otherwise.
  */
-int str_lower ( char *str )
+int str_lower( char *str )
 {
     if ( str == NULL )
         return 0;
-    if ( str[0] >= 'A' && str[0] <= 'Z' )
-        str[0] = str[0] + ('a' - 'A');
+    if ( str[ 0 ] >= 'A' && str[ 0 ] <= 'Z' )
+        str[ 0 ] = str[ 0 ] + ( 'a' - 'A' );
     return 1;
 }
 
@@ -829,7 +830,7 @@ int str_lower ( char *str )
  *
  * Returns 0 if equal, non-zero otherwise.
  */
-int str_nocase_cmp ( const char *s1, const char *s2 )
+int str_nocase_cmp( const char *s1, const char *s2 )
 {
     int c1, c2;
     if ( s1 == NULL || s2 == NULL )
@@ -839,9 +840,9 @@ int str_nocase_cmp ( const char *s1, const char *s2 )
         c1 = *s1++;
         c2 = *s2++;
         if ( c1 >= 'a' && c1 <= 'z' )
-            c1 -= ('a' - 'A');
+            c1 -= ( 'a' - 'A' );
         if ( c2 >= 'a' && c2 <= 'z' )
-            c2 -= ('a' - 'A');
+            c2 -= ( 'a' - 'A' );
         if ( c1 == '\0' )
             return c1 - c2;
     }
@@ -857,7 +858,7 @@ int str_nocase_cmp ( const char *s1, const char *s2 )
  *
  * Returns 0 if equal, non-zero otherwise.
  */
-int str_nocase_ncmp ( const char *s1, const char *s2, size_t n )
+int str_nocase_ncmp( const char *s1, const char *s2, size_t n )
 {
     int c1, c2;
     if ( s1 == NULL || s2 == NULL || n == 0 )
@@ -867,9 +868,9 @@ int str_nocase_ncmp ( const char *s1, const char *s2, size_t n )
         c1 = *s1++;
         c2 = *s2++;
         if ( c1 >= 'a' && c1 <= 'z' )
-            c1 -= ('a' - 'A');
+            c1 -= ( 'a' - 'A' );
         if ( c2 >= 'a' && c2 <= 'z' )
-            c2 -= ('a' - 'A');
+            c2 -= ( 'a' - 'A' );
         if ( c1 == '\0' || --n == 0 )
             return c1 - c2;
     }
@@ -884,17 +885,17 @@ int str_nocase_ncmp ( const char *s1, const char *s2, size_t n )
  *
  * Returns pointer to the first occurrence, or NULL if not found.
  */
-char *str_nocase_str ( const char *haystack, const char *needle )
+char *str_nocase_str( const char *haystack, const char *needle )
 {
     size_t needle_len;
     if ( haystack == NULL || needle == NULL )
         return NULL;
-    needle_len = strlen ( needle );
+    needle_len = strlen( needle );
     if ( needle_len == 0 )
         return ( char * )haystack;
     while ( *haystack )
     {
-        if ( str_nocase_ncmp ( haystack, needle, needle_len ) == 0 )
+        if ( str_nocase_ncmp( haystack, needle, needle_len ) == 0 )
             return ( char * )haystack;
         haystack++;
     }
@@ -908,17 +909,17 @@ char *str_nocase_str ( const char *haystack, const char *needle )
  *
  * Returns pointer to the character, or NULL if not found.
  */
-char *str_nocase_chr ( const char *s, int c )
+char *str_nocase_chr( const char *s, int c )
 {
     if ( s == NULL )
         return NULL;
     if ( c >= 'a' && c <= 'z' )
-        c -= ('a' - 'A');
+        c -= ( 'a' - 'A' );
     while ( *s )
     {
         int sc = *s;
         if ( sc >= 'a' && sc <= 'z' )
-            sc -= ('a' - 'A');
+            sc -= ( 'a' - 'A' );
         if ( sc == c )
             return ( char * )s;
         s++;
@@ -935,14 +936,14 @@ char *str_nocase_chr ( const char *s, int c )
  *
  * Returns the length of the segment.
  */
-size_t str_nocase_spn ( const char *s, const char *accept )
+size_t str_nocase_spn( const char *s, const char *accept )
 {
     size_t count = 0;
     if ( s == NULL || accept == NULL )
         return 0;
     while ( *s )
     {
-        if ( str_nocase_chr ( accept, *s ) == NULL )
+        if ( str_nocase_chr( accept, *s ) == NULL )
             return count;
         count++;
         s++;
@@ -957,14 +958,14 @@ size_t str_nocase_spn ( const char *s, const char *accept )
  *
  * Returns the length of the segment.
  */
-size_t str_nocase_cspn ( const char *s, const char *reject )
+size_t str_nocase_cspn( const char *s, const char *reject )
 {
     size_t count = 0;
     if ( s == NULL || reject == NULL )
         return 0;
     while ( *s )
     {
-        if ( str_nocase_chr ( reject, *s ) != NULL )
+        if ( str_nocase_chr( reject, *s ) != NULL )
             return count;
         count++;
         s++;
@@ -978,17 +979,17 @@ size_t str_nocase_cspn ( const char *s, const char *reject )
  *
  * Returns pointer to the duplicated string, or NULL on failure.
  */
-char *str_nocase_dup ( const char *s )
+char *str_nocase_dup( const char *s )
 {
     char *dup;
     size_t len;
     if ( s == NULL )
         return NULL;
-    len = strlen ( s );
-    dup = ( char * )malloc ( len + 1 );
+    len = strlen( s );
+    dup = ( char * )malloc( len + 1 );
     if ( dup == NULL )
         return NULL;
-    memcpy ( dup, s, len + 1 );
+    memcpy( dup, s, len + 1 );
     return dup;
 }
 
@@ -998,13 +999,13 @@ char *str_nocase_dup ( const char *s )
  *
  * Returns pointer to the reversed string.
  */
-char *str_rev ( char *s )
+char *str_rev( char *s )
 {
     char *start, *end, tmp;
     if ( s == NULL )
         return NULL;
     start = s;
-    end = s + strlen ( s ) - 1;
+    end = s + strlen( s ) - 1;
     while ( start < end )
     {
         tmp = *start;
@@ -1022,7 +1023,7 @@ char *str_rev ( char *s )
  *
  * Returns 1 if valid number, 0 otherwise.
  */
-int str_isnumber ( const char *s )
+int str_isnumber( const char *s )
 {
     if ( s == NULL || *s == '\0' )
         return 0;
@@ -1045,7 +1046,7 @@ int str_isnumber ( const char *s )
  *
  * Returns 1 if valid decimal, 0 otherwise.
  */
-int is_number_decimal ( const char *s )
+int is_number_decimal( const char *s )
 {
     int seen_decimal = 0;
     if ( s == NULL || *s == '\0' )

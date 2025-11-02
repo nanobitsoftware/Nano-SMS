@@ -1,4 +1,7 @@
 
+#pragma once
+
+
 /* Header for the NWC_Main.c windowing system
 */
 #define NWC_MAX_GUI 2048 // Max total items; windows, controls, children, etc.
@@ -16,6 +19,10 @@
 #define EDIT       8
 #define STATIC     9
 #define CHECKBOX  10
+
+#ifndef BOOL
+#define BOOL bool
+#endif
 
 typedef struct NWC_Parent NWC_PARENT;
 typedef struct NWC_Child  NWC_CHILD;
@@ -121,7 +128,7 @@ struct collate_ctrls
     char* parent_name;
     int x;
     int y;
-    bool visible;
+    BOOL visible;
     int type;
     int ctrl_num;
     DWORD flags;
@@ -134,7 +141,7 @@ struct collate_window
     int x;
     int y;
     int ctrl_count;
-    bool ontop;
+    BOOL ontop;
 
     NWC_PARENT* parent;
     struct collate_ctrls** ctrls;
@@ -213,6 +220,6 @@ void NWC_BoundBox( NWC_PARENT* p, int x, int y );
 void collate_windows( void );
 void* nwc_widget_create_entry( NWC_PARENT* self );
 void NWC_BoundBox( NWC_PARENT* p, int x, int y );
-bool  NWC_Getprinter( NWC_PARENT* p );
+BOOL  NWC_Getprinter( NWC_PARENT* p );
 COLLATE_WINDOW* new_collate_window( void );
 COLLATE_CTRLS* new_collate_ctrl( void );

@@ -28,11 +28,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     */
-
+#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <windows.h>
+
 #include <math.h>
 #include <time.h>
 #include <stdarg.h>
@@ -79,7 +79,7 @@ FILESTREAM *_fs_find_handle( char *path )
     return NULL; // Not found.
 }
 
-BOOL _init_fs (void)
+BOOL _init_fs( void )
 {
     _fs_registry.streams = NULL;
     _fs_registry.count = 0;
@@ -95,14 +95,14 @@ BOOL _init_fs (void)
  * IMPORTANT: This function does not check for duplicates.
  * IMPORTANT: YOU MUST CHECK THE RETURN VALUE!
  * IMPORTANT: THIS IS AN INTERNAL FUNCTION; NOT FOR PUBLIC USE!
- * 
+ *
  * @param fs Pointer to the FILESTREAM to register.
  * @return TRUE if registration succeeded, FALSE if memory allocation failed.
  */
 BOOL _register_fs_handle( FILESTREAM *fs )
 {
     FILESTREAM **new_streams;
-    
+
     if ( fs == NULL )
     {
         return FALSE;
@@ -113,20 +113,20 @@ BOOL _register_fs_handle( FILESTREAM *fs )
         size_t new_capacity = ( _fs_registry.capacity == 0 ) ? 4 : _fs_registry.capacity * 2;
         if ( _fs_registry.streams )
         {
-           new_streams = ( FILESTREAM ** )realloc( _fs_registry.streams, new_capacity * sizeof( FILESTREAM * ) );
+            new_streams = ( FILESTREAM ** )realloc( _fs_registry.streams, new_capacity * sizeof( FILESTREAM * ) );
 
         }
         else
         {
             new_streams = ( FILESTREAM ** )malloc( new_capacity * sizeof( FILESTREAM * ) );
-           
+
         }
 
         _fs_registry.streams = new_streams;
         _fs_registry.capacity = new_capacity;
     }
 
-    _fs_registry.streams[ (_fs_registry.count++)-1 ] = fs;
+    _fs_registry.streams[ ( _fs_registry.count++ ) - 1 ] = fs;
     return TRUE;
 }
 
@@ -279,7 +279,7 @@ BOOL _free_fs_stream( FILESTREAM *fs, int line, char *file )
         fs->is_open = FALSE;
     }
 
-    
+
 
     if ( !_unregister_fs_handle( fs ) )
     {
@@ -317,7 +317,7 @@ BOOL _free_fs_stream( FILESTREAM *fs, int line, char *file )
     return TRUE;
 }
 
-char * size_type_to_string( int type )
+char *size_type_to_string( int type )
 {
     switch ( type )
     {
@@ -336,7 +336,7 @@ char * size_type_to_string( int type )
     }
 }
 
-char * size_type_from_len (size_t len)
+char *size_type_from_len( size_t len )
 {
     if ( len < 1024 )
     {
@@ -365,11 +365,11 @@ char * size_type_from_len (size_t len)
 }
 
 /* Return a nummber for human readability from a double.*/
-double double_to_human (size_t hr_size)
+double double_to_human( size_t hr_size )
 {
     if ( hr_size < 1024 )
     {
-        return (double) hr_size;
+        return ( double )hr_size;
     }
     else if ( hr_size >= 1024 && hr_size < 1048576 )
     {
@@ -458,34 +458,34 @@ FILESTREAM *fs_open( FILESTREAM *fs, const char *path, const char *mode )
     fs->file_size = _ftelli64( fs->file );
     _fseeki64( fs->file, 0, SEEK_SET );
 
-    /* Determine the size type and human-readable size 
-     * numbers are pre-calculated at code time. Check 
+    /* Determine the size type and human-readable size
+     * numbers are pre-calculated at code time. Check
      * my math if you must.
      */
-    if ( fs->file_size  < 1024)
+    if ( fs->file_size < 1024 )
     {
         fs->size_type = TYPE_BYTE;
     }
     else if ( fs->file_size >= 1024 && fs->file_size < 1048576 )
     {
         fs->size_type = TYPE_KILOBYTE;
-        fs->hr_size = (double) fs->file_size / 1024;
+        fs->hr_size = ( double )fs->file_size / 1024;
     }
     else if ( fs->file_size >= 1048576 && fs->file_size < 1073741824 )
     {
         fs->size_type = TYPE_MEGABYTE;
-        fs->hr_size = (double) fs->file_size / 1024 / 1024;
+        fs->hr_size = ( double )fs->file_size / 1024 / 1024;
 
     }
     else if ( fs->file_size >= 1073741824 && fs->file_size < 1099511627776 )
     {
         fs->size_type = TYPE_GIGABYTE;
-        fs->hr_size = (double) fs->file_size / 1024 / 1024 / 1024;
+        fs->hr_size = ( double )fs->file_size / 1024 / 1024 / 1024;
     }
     else if ( fs->file_size >= 1099511627776 )
     {
         fs->size_type = TYPE_TERABYTE;
-        fs->hr_size = (double) fs->file_size / 1024 / 1024 / 1024 / 1024;
+        fs->hr_size = ( double )fs->file_size / 1024 / 1024 / 1024 / 1024;
     }
     else
     {
@@ -551,17 +551,17 @@ FILESTREAM *fs_open( FILESTREAM *fs, const char *path, const char *mode )
     return fs;
 }
 
-/* fs_close: close the filestream and clean up al ittle 
+/* fs_close: close the filestream and clean up al ittle
 */
 
-BOOL fs_close ( FILESTREAM *fs, BOOL cleanup )
+BOOL fs_close( FILESTREAM *fs, BOOL cleanup )
 {
     if ( fs == NULL )
     {
         return FALSE;
     }
-    
-    if ( !fs->is_open && !cleanup)
+
+    if ( !fs->is_open && !cleanup )
     {
         return TRUE; // Already closed.
     }
@@ -570,16 +570,16 @@ BOOL fs_close ( FILESTREAM *fs, BOOL cleanup )
         if ( !fs->is_open && cleanup )
         {
             // If we're cleaning up, we should free the stream.
-            return _free_fs_stream ( fs, __LINE__, __FILE__ );
+            return _free_fs_stream( fs, __LINE__, __FILE__ );
         }
     }
-    
-    if ( fclose ( fs->file ) != 0 )
+
+    if ( fclose( fs->file ) != 0 )
     {
-        if (cleanup)
+        if ( cleanup )
         {
-            _free_fs_stream ( fs, __LINE__, __FILE__ ); // If we can't close it, we should still free it if cleanup is requested.
-            LOG ( "Unable to free file stream!" );
+            _free_fs_stream( fs, __LINE__, __FILE__ ); // If we can't close it, we should still free it if cleanup is requested.
+            LOG( "Unable to free file stream!" );
             return FALSE;
         }
         else
@@ -588,11 +588,11 @@ BOOL fs_close ( FILESTREAM *fs, BOOL cleanup )
             return FALSE; // Error closing file.
         }
     }
-    
-    
+
+
     if ( cleanup )
     {
-        return _free_fs_stream ( fs, __LINE__, __FILE__ );
+        return _free_fs_stream( fs, __LINE__, __FILE__ );
     }
 
     fs->is_open = FALSE;
@@ -603,9 +603,9 @@ BOOL fs_close ( FILESTREAM *fs, BOOL cleanup )
 }
 
 /* logfs will report the structure to the logfile for debug purposes.*/
-void logfs ( FILESTREAM *fs )
+void logfs( FILESTREAM *fs )
 {
-    
+
     static char buf[ 2048 * 2 ];
 
 
@@ -616,44 +616,44 @@ void logfs ( FILESTREAM *fs )
     if ( !fs->file )
         return;
     buf[ 0 ] = '\0';
-    LOG ( "-------------------------------------------------------------" );
-    LOG ( "FileStream Structure:" );
-    LOG ( "-------------------------------------------------------------" );
-    sprintf ( buf, 
-              
-                     "File Path     : %25s\n"
-                     "File Name     : %25s\n"
-                     "Buf Allocated : %23.2f%s\n"
-                     "Buffer Length : %25zu\n"
-                     "Pos           : %25zu\n"
-                     "Bytes Read    : %25zu\n"
-                     "File Size     : %19zu bytes\n"
-                     "Human Size    : %22.2f %s\n"
-                     "Seek Position : %25zu\n"
-                     "Opened        : %25s\n"
-                     "Modified      : %25s\n"
-                     "Accessed      : %25zu\n"
-                     "File pointer  : %25p\n"
-                     "Eof           : %25s\n",
-              fs->file_path,
-              fs->file_name,
-              double_to_human(fs->buffer ? fs->size : 0),
-              size_type_from_len( fs->size ),
-              fs->length,
-              fs->pos,
-              fs->file_read,
-              fs->file_size ,
-              fs->hr_size,
-              size_type_to_string( fs->size_type ),
-              fs->seek_pos,
-              fs->is_open ? "TRUE" : "FALSE",
-              fs->modified ? "TRUE" : "FALSE",
-              fs->accessed,
-              fs->file,
-              fs->eof ? "TRUE" : "FALSE"
+    LOG( "-------------------------------------------------------------" );
+    LOG( "FileStream Structure:" );
+    LOG( "-------------------------------------------------------------" );
+    sprintf( buf,
+
+             "File Path     : %25s\n"
+             "File Name     : %25s\n"
+             "Buf Allocated : %23.2f%s\n"
+             "Buffer Length : %25zu\n"
+             "Pos           : %25zu\n"
+             "Bytes Read    : %25zu\n"
+             "File Size     : %19zu bytes\n"
+             "Human Size    : %22.2f %s\n"
+             "Seek Position : %25zu\n"
+             "Opened        : %25s\n"
+             "Modified      : %25s\n"
+             "Accessed      : %25zu\n"
+             "File pointer  : %25p\n"
+             "Eof           : %25s\n",
+             fs->file_path,
+             fs->file_name,
+             double_to_human( fs->buffer ? fs->size : 0 ),
+             size_type_from_len( fs->size ),
+             fs->length,
+             fs->pos,
+             fs->file_read,
+             fs->file_size,
+             fs->hr_size,
+             size_type_to_string( fs->size_type ),
+             fs->seek_pos,
+             fs->is_open ? "TRUE" : "FALSE",
+             fs->modified ? "TRUE" : "FALSE",
+             fs->accessed,
+             fs->file,
+             fs->eof ? "TRUE" : "FALSE"
     );
-    LOG ( buf );
-    LOG ( "-------------------------------------------------------------\n\n" );
+    LOG( buf );
+    LOG( "-------------------------------------------------------------\n\n" );
 
 }
 
@@ -731,7 +731,7 @@ enum token_type token_from_char( char c )
     }
 }
 
-/* fs_read: read from the filestream into the buffer. 
+/* fs_read: read from the filestream into the buffer.
  * Returns number of bytes read, or -1 on error.
  * This function will read up to size bytes from the file into the buffer.
  * It will update the pos, length, and file_read fields of the FILESTREAM.
@@ -815,7 +815,7 @@ size_t fs_read( FILESTREAM *fs, size_t size )
     total = stop - start;
     LOG( "Time taken to read: %zu seconds\n", total );
     start = time( NULL );
-    
+
     fs->total_lines = 0;
     for ( i = 0; i < fs->pos; i++ )
     {
@@ -829,8 +829,8 @@ size_t fs_read( FILESTREAM *fs, size_t size )
     total = stop - start;
     LOG( "Time taken to count lines: %zu seconds\n", total );
 
-    
-    
+
+
     fs->pos += bytes_read;
     fs->length += bytes_read;
     fs->file_read += bytes_read;
