@@ -78,6 +78,7 @@
 #include "sqlite3/sqlite3.h"
 #include "NWC.h"
 #include "sms_db.h"
+#include "XML.h"
 
 
 
@@ -192,13 +193,25 @@ WINAPI WinMain( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
     if ( fs )
     {
         logfs( fs );
-        if ( fs->buffer )
-            memcpy( buf, &fs->buffer[ 3921 ], 1000 );
-        buf[ 999 ] = '\0';
-        LOG( "Buffer 3921: %s", buf );
     }
 
+    size_t u, f, t;
 
+    u = get_used_system_memory( );
+    f = get_free_system_memory( );
+    t = get_total_system_memory( );
+
+    sprintf( buf,
+             "System Memory Stats:\n"
+             "Used Memory : %zu bytes (%f.2 %s)\n"
+             "Free Memory : %zu bytes (%f.2 %s)\n"
+             "Total Memory: %zu bytes (%f.2 %s)\n"
+             "XML Read Method: %d\n",
+             u, double_to_human( u ), size_type_from_len( u ),
+             f, double_to_human( f ), size_type_from_len( f ),
+             t, double_to_human( t ), size_type_from_len( t ),
+             determine_xml_read_method( fs ) );
+    GiveError( buf, FALSE );
     GiveError( "Within windows main function and will now be exiing.", TRUE );
     exit( 12 );
 
@@ -874,7 +887,7 @@ void GiveError( char *wrong, BOOL KillProcess )
         }
     }
 
-    MessageBox( GetFocus( ), ( LPCWSTR )wrong, ( LPCWSTR )"Nano-SMS Error", MB_ICONSTOP | MB_OK );
+    MessageBoxA( GetFocus( ), ( LPCSTR )wrong, ( LPCSTR )"Nano-SMS Error", MB_ICONSTOP | MB_OK );
 
     if ( KillProcess )
     {

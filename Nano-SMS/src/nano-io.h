@@ -88,11 +88,16 @@ typedef struct filestream FILESTREAM;
 #define STREAM_CUR_TOKEN(x) ((x) ? (x->cur_token) : 0)
 #define STREAM_SEEK_POS(x) ((x) ? (x->seek_pos > 0 ? x->seek_pos : 0) : -1)
 
+#define STREAM_AS_CHUNKS 1
+#define STREAM_AS_FILE 2
+#define STREAM_AS_ERROR 0
+
 // These are for error purposes and logging. They're just file wrappers.
 #define new_fs_stream() _new_fs_stream(__LINE__, __FILE__)
 #define free_fs_stream(x) _free_fs_stream(x, __LINE__, __FILE__)
 
 
+static size_t ALLOWED_RAM_USAGE = 40; // This is in percentage of total system memory 
 
 
 enum token_type
@@ -209,3 +214,6 @@ char* size_type_from_len( size_t len );
 double double_to_human( size_t hr_size );
 size_t fs_read( FILESTREAM* fs, size_t size );
 BOOL _init_fs( void );
+size_t get_total_system_memory( void );
+size_t get_used_system_memory( void );
+size_t get_free_system_memory( void );

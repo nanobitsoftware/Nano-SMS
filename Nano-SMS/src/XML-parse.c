@@ -119,35 +119,26 @@ static size_t xml_doctype_len = 0; // Length of doctype buffer.
 static size_t xml_entity_len = 0; // Length of entity buffer.
 static size_t xml_processing_len = 0; // Length of processing buffer.
 
+#define MAX_TOKEN 2048 // Max tokens allowed in any given 'line'
+
+struct lex
+{
+    enum token_type type; // Define in nano-io.h
+    char *value; // Pointer to a char of our value.
+    char *point; // Pointer to the position in the data where this token was found.
+    size_t size; // Size o the 'value'
+    int  str_start; // Starting index in the data. Only returned when we're in a string literal.
+    int  str_end; // Ending index in the data.
+
+};
+
+struct lex xml_tokens[ MAX_TOKEN ];
+static size_t xml_token_count = 0;
 
 
-/* This does **NOT** create a fully compliant XML parser. It may work for some stuff
-    with tweaks, but it is designed first and foremost as a parse for SMS Backup and Restore
-    version of xml. Meaning it's designed only to read their files.
-    */
 
-/*////////////SMS XML
- <smses count="#" backup_set="<smsbackup Guid" backup_date="#" type="<full>">
- sms: <sms protocol="0" address="#" date="#" type="#" subject="<token>?" body='<sms body>' toa="null" sc_toa="null" service_center="<sms center>" read="#" status="-#" locked="#" date_sent="#" sub_id="#" readable_date="<date>" contact_name="<name of sender>" />
- <mms date="#" spam_report="#" predefined_id="-#" ct_t="text/plain" msg_box="#" address="#" sub_cs="<charset>" re_type="0" retr_st="null" re_original_body="null" d_tm="null" exp="null" locked="0" msg_id="0" app_id="0" from_address="null" m_id="<message id>" spam_type="0" retr_txt="null" date_sent="#" read="1" rpt_a="null" ct_cls="#" bin_info="0" pri="null" sub_id="1" re_content_type="null" object_id="null" resp_txt="null" re_content_uri="null" ct_l="null" re_original_key="null" d_rpt="null" reserved="0" using_mode="0" _id="#" rr_st="0" m_type="132" favorite="0" rr="null" sub="" hidden="0" deletable="0" read_status="null" d_rpt_st="0" callback_set="0" re_count_info_custom_reaction="null" seen="1" re_recipient_address="null" device_name="null" cmc_prop="null" resp_st="null" text_only="1" sim_slot="0" st="null" retr_txt_cs="null" creator="com.google.android.apps.messaging" m_size="0" sim_imsi="null" block_filtered_status="null" correlation_tag="null" re_body="null" safe_message="0" tr_id="" m_cls="null" v="null" secret_mode="0" re_file_name="null" re_count_info="null" readable_date="<date>" contact_name="<contact name>">
-    <parts>
-      <part seq="0" ct="text/plain" name="body|filename" chset="#" cd="null" fn="null" cid="null" cl="null" ctt_s="null" ctt_t="null" text="<mms text>" sef_type="0" decorate_bubble_value="null" sub_id="1" />
-    </parts>
-    <addrs>
-      <addr address="<numbers>" type="130" charset="106" />
-      <addr address="<nuymbers>" type="137" charset="106" />
-      <addr address="<numbers>" type="151" charset="106" />
-    </addrs>
 
-  </mms>
-  <mms>
-    <parts>
-        <part seq="0" ct="image/jpeg" name="<filename>" chset="null" cd="null" fn="null" cid="<id>" cl="<filename>" ctt_s="null" ctt_t="null" text="null" sef_type="0" decorate_bubble_value="null" sub_id="1" data="<datablob>" />
-    </parts>
-</mms>
- */
-
-/* explain mms xml above
+/*
   msg_box: 1=inbox, 2=sent, 3=draft, 4=outbox, 5=failed, 6=queued
   ct_cls: content class, 0-255, 0=personal, 1=advertisement, 2=informational, 3=auto
   ct_t: content type, text/plain, application/vnd.wap.multipart.related, etc.
@@ -181,6 +172,192 @@ static size_t xml_processing_len = 0; // Length of processing buffer.
     * @param backup: pointer to the SMS_BACKUP structure to populate
     * @return: 1 on success, -1 on failure
     */
+
+
+void  init_tokens( void )
+{
+    int i;
+    for ( i = 0; i < MAX_TOKEN; i++ )
+    {
+        xml_tokens[ i ].type = TOKEN_NONE;
+    }
+}
+
+
+
+size_t chunk_xml_buffer( FILESTREAM *fs, char *buffer, size_t buffer_size, size_t chunk_size )
+{
+    if ( !fs || buffer_size == 0 || chunk_size == 0 )
+    {
+        fprintf( stderr, "Invalid parameters provided to chunk_xml_buffer\n" );
+        return 0;
+    }
+
+
+    size_t total_bytes_read = 0;
+    size_t bytes_to_read = buffer_size;
+    if ( buffer == NULL )
+    {
+        buffer = ( char * )malloc( buffer_size + 1024 );
+    }
+    else
+    {
+        buffer = ( char * )realloc( buffer, buffer_size + 1024 );
+    }
+    if ( !buffer )
+    {
+        fprintf( stderr, "Failed to allocate memory for XML buffer\n" );
+        return 0;
+    }
+
+    memset( buffer, 0, buffer_size + 1024 );
+
+    while ( total_bytes_read < buffer_size )
+    {
+        size_t bytes_read = fs_read( fs, chunk_size );
+        if ( bytes_read == 0 )
+        {
+            break; // End of file reached
+        }
+        memcpy( buffer + total_bytes_read, fs->buffer + fs->pos - bytes_read, bytes_read );
+        total_bytes_read += bytes_read;
+        bytes_to_read -= bytes_read;
+    }
+    return total_bytes_read;
+}
+
+size_t fill_xml_buffer( FILESTREAM *fs, char *buffer )
+{
+
+    // Figure out size of file, make a buffer to match
+    size_t file_size = fs->file_size;
+    if ( buffer == NULL )
+    {
+        buffer = ( char * )malloc( file_size + 1024 );
+    }
+    else
+    {
+        buffer = ( char * )realloc( buffer, file_size + 1024 );
+    }
+    if ( !buffer )
+    {
+        fprintf( stderr, "Failed to allocate memory for XML buffer\n" );
+        return 0;
+    }
+    memset( buffer, 0, file_size + 1024 );
+    size_t total_bytes_read = 0;
+    while ( total_bytes_read < file_size )
+    {
+        // TODO: Add ability to send a signal to the updater so we're not 'stuck' on GUI.
+        size_t bytes_read = fs_read( fs, file_size - total_bytes_read );
+        if ( bytes_read == 0 )
+        {
+            break; // End of file reached
+        }
+        memcpy( buffer + total_bytes_read, fs->buffer + fs->pos - bytes_read, bytes_read );
+        total_bytes_read += bytes_read;
+    }
+    return total_bytes_read;
+
+}
+
+int determine_xml_read_method( FILESTREAM *fs )
+{
+
+    size_t system_memory;
+    size_t free_system_memory;
+    size_t free_percent;
+    size_t used_system_memory;
+    size_t filesize_delta;
+    size_t free_percent_bytes;
+
+    if ( !fs )
+    {
+        fprintf( stderr, "Invalid file stream provided to determine_xml_read_method\n" );
+        return STREAM_AS_ERROR;
+    }
+
+    system_memory = get_total_system_memory( );
+    free_system_memory = get_free_system_memory( );
+    used_system_memory = get_used_system_memory( );
+    free_percent = ( free_system_memory * 100 ) / system_memory;
+    free_percent_bytes = ( free_system_memory * ALLOWED_RAM_USAGE ) / 100;
+    filesize_delta = free_percent_bytes - fs->file_size;
+
+    LOG( "System Memory: %14zu bytes\n"
+         "Used Memory  : %14zu bytes\n"
+         "Free Memory  : %14zu bytes\n"
+         "File Size    : %14zu bytes\n"
+         "Free Percent : %14zu %%\n",
+         system_memory,
+         used_system_memory,
+         free_system_memory,
+         fs->file_size,
+         free_percent );
+    LOG( "%-3zu%% Free bytes: %14zu bytes\n"
+         "Filesize delta : %14zu bytes\n"
+         "%zu%% of free bytes used\n",
+         ALLOWED_RAM_USAGE,
+         free_percent_bytes,
+         filesize_delta,
+         ( 100 ) - ( filesize_delta * 100 ) / free_percent_bytes
+    );
+
+
+    // How big is our file?
+    if ( fs->file_size > free_system_memory || free_percent < ALLOWED_RAM_USAGE ||
+         fs->file_size >( free_system_memory * 100 ) / ALLOWED_RAM_USAGE )
+    {
+        // If free memory is below the allowed threshold, use chunked reading.
+        return STREAM_AS_CHUNKS;
+    }
+
+    // For now, let's just read the whole file into memory.
+
+    return STREAM_AS_FILE;
+}
+
+void begin_read_sms_new( FILESTREAM *fs )
+{
+    int method;
+
+    if ( !fs )
+    {
+        fprintf( stderr, "Invalid file stream provided to begin_read_sms_new\n" );
+        return;
+    }
+
+    xml_stream = fs;
+
+    // Read the entire file into memory for parsing.
+    xml_data_len = fs->file_size;
+
+    // Let's determine if we need to read it all as one file, or as in chunks.
+    method = determine_xml_read_method( fs );
+    xml_data = ( char * )malloc( xml_data_len + 1 );
+    if ( !xml_data )
+    {
+        fprintf( stderr, "Failed to allocate memory for XML data\n" );
+        return;
+
+    }
+
+    memset( xml_data, 0, xml_data_len + 1 );
+    size_t bytes_read = fs_read( fs, xml_data_len );
+    if ( bytes_read != xml_data_len )
+    {
+        fprintf( stderr, "Failed to read entire XML file into memory\n" );
+        free( xml_data );
+        xml_data = NULL;
+        return;
+    }
+    xml_data_pos = 0; // Start at the beginning of the data.
+}
+
+
+/* Function to create a new SMS_BACKUP structure
+ * @return: pointer to the new SMS_BACKUP structure, or NULL on failure
+ */
 SMS_BACKUP *XML_new( void )
 {
     SMS_BACKUP *backup = ( SMS_BACKUP * )malloc( sizeof( SMS_BACKUP ) );

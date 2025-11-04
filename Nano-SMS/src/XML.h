@@ -48,6 +48,7 @@
 
 
 #include <time.h>
+#include "nano-io.h"
 
 
 // !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! 
@@ -73,6 +74,8 @@
 #define MAX_CHILD MAX_PARENT * 4
 #define MAX_STGRING_LENGTH  1024 * 1024 // 1mb max string length. This is a safeguard, not a hard limit.
 #define MSL MAX_STRING_LENGTH // just an alias.
+
+
 
 typedef struct xml_node_parent XML_NODE_PARENT;
 typedef struct xml_node_child XML_NODE_CHILD;
@@ -117,3 +120,11 @@ struct xml_node_media {
     XML_NODE_PARENT* parent;
 };
 
+
+
+
+void  init_tokens( void );
+int determine_xml_read_method( FILESTREAM* fs );
+void begin_read_sms_new( FILESTREAM* fs );
+size_t fill_xml_buffer( FILESTREAM* fs, char* buffer );
+size_t chunk_xml_buffer( FILESTREAM* fs, char* buffer, size_t buffer_size, size_t chunk_size );

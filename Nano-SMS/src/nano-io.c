@@ -792,11 +792,9 @@ size_t fs_read( FILESTREAM *fs, size_t size )
         bytes_to_read = fs->file_size - fs->pos; // Adjust to not read past EOF.
     }
     size_t bytes_read = fread( fs->buffer + fs->pos, 1, bytes_to_read, fs->file );
-    LOG( "Bytes ReaD: %zu\n", bytes_read );
-    LOG( "Pos: %zu\n", fs->pos );
 
     fs->pos = fs->pos + bytes_read;
-    LOG( "Pos after setting: %zu\n", fs->pos );
+
     if ( bytes_read < bytes_to_read )
     {
         if ( ferror( fs->file ) )
@@ -836,4 +834,28 @@ size_t fs_read( FILESTREAM *fs, size_t size )
     fs->file_read += bytes_read;
     fs->buffer[ fs->length ] = '\0'; // Null-terminate the buffer.
     return ( int )bytes_read;
+}
+
+size_t get_total_system_memory( void )
+{
+    MEMORYSTATUSEX statex;
+    statex.dwLength = sizeof( statex );
+    GlobalMemoryStatusEx( &statex );
+    return ( size_t )statex.ullTotalPhys;
+}
+
+size_t get_used_system_memory( void )
+{
+    MEMORYSTATUSEX statex;
+    statex.dwLength = sizeof( statex );
+    GlobalMemoryStatusEx( &statex );
+    return ( size_t )( statex.ullTotalPhys - statex.ullAvailPhys );
+}
+
+size_t get_free_system_memory( void )
+{
+    MEMORYSTATUSEX statex;
+    statex.dwLength = sizeof( statex );
+    GlobalMemoryStatusEx( &statex );
+    return ( size_t )statex.ullAvailPhys;
 }
