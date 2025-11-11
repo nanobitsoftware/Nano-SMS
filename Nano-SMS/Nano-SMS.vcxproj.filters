@@ -59,9 +59,6 @@
     <ClInclude Include="src\nano-sms.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\sms_db.h">
-      <Filter>Resource Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\XML.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -69,6 +66,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\sms-language.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sms_db.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

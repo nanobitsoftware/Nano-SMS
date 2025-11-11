@@ -438,6 +438,8 @@ FILESTREAM *fs_open( FILESTREAM *fs, const char *path, const char *mode )
 
     fs->file = fopen( path, mode );
 
+
+
     if ( fs->file == NULL )
     {
         if ( fsnew != NULL )
@@ -447,6 +449,9 @@ FILESTREAM *fs_open( FILESTREAM *fs, const char *path, const char *mode )
         else
         {
             fs->last_error = STREAM_ERROR;
+            fs->mode = MODE_ERROR;
+            fs->state = STATE_ERRORS;
+
         }
         LOG( "Unable to open %s within mode %s, returning NULL.", path, mode );
         return NULL;
@@ -527,9 +532,25 @@ FILESTREAM *fs_open( FILESTREAM *fs, const char *path, const char *mode )
     {
         fs->mode = MODE_READWRITE;
     }
-    else if ( strcmp( mode, "rb" ) == 0 || strcmp( mode, "wb" ) == 0 || strcmp( mode, "ab" ) == 0 || strcmp( mode, "r+b" ) == 0 )
+    else if ( strcmp( mode, "b" ) == 0 )
     {
         fs->mode = MODE_BINARY;
+    }
+    else if ( strcmp( mode, "rw" ) == 0 )
+    {
+        fs->mode = MODE_READWRITE;
+    }
+    else if ( strcmp( mode, "rb" ) == 0 )
+    {
+        fs->mode = MODE_READBINARY;
+    }
+    else if ( strcmp( mode, "wb" ) == 0 )
+    {
+        fs->mode = MODE_WRITEBINARY;
+    }
+    else if ( strcmp( mode, "ab" ) == 0 )
+    {
+        fs->mode = MODE_APPENDBINARY;
     }
     else
     {
@@ -548,6 +569,9 @@ FILESTREAM *fs_open( FILESTREAM *fs, const char *path, const char *mode )
     fs->length = 0;
     fs->file_read = 0;
     fs->seek_pos = 0;
+    fs->state = STATE_OPEN;
+
+    fs->size_type = TYPE_BYTE;
     return fs;
 }
 

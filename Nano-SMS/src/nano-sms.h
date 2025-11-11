@@ -77,6 +77,8 @@
 #define LOWER(c)        ((c) >= 'A' && (c) <= 'Z' ? (c)+'a'-'A' : (c))
 #define UPPER(c)        ((c) >= 'a' && (c) <= 'z' ? (c)+'A'-'a' : (c))
 
+#define LOG_PARSING_MEMORY TRUE // Set to TRUE to enable memory logging for parsing functions.
+
 #define DEBUG_FILE "c:\\nanobit\\debug.log"
 
 

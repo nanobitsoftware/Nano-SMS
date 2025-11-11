@@ -184,7 +184,16 @@ void  init_tokens( void )
 }
 
 
-
+// Read chunk of the fs into a buffer. Used for if we will use too much memory.
+// Mean to be called on a loop until EOF.
+/**
+ * @brief Read a chunk of the file stream into a buffer
+ * @param fs: pointer to the FILESTREAM structure
+ * @param buffer: pointer to the buffer to fill
+ * @param buffer_size: size of the buffer
+ * @param chunk_size: size of the chunk to read
+ * @return: the number of bytes read into the buffer
+ */
 size_t chunk_xml_buffer( FILESTREAM *fs, char *buffer, size_t buffer_size, size_t chunk_size )
 {
     if ( !fs || buffer_size == 0 || chunk_size == 0 )
@@ -226,6 +235,11 @@ size_t chunk_xml_buffer( FILESTREAM *fs, char *buffer, size_t buffer_size, size_
     return total_bytes_read;
 }
 
+/** @brief Fill the XML buffer with data from the file stream
+ * @param fs: pointer to the FILESTREAM structure
+ * @param buffer: pointer to the buffer to fill
+ * @return: the number of bytes read into the buffer
+ */
 size_t fill_xml_buffer( FILESTREAM *fs, char *buffer )
 {
 
@@ -260,7 +274,11 @@ size_t fill_xml_buffer( FILESTREAM *fs, char *buffer )
     return total_bytes_read;
 
 }
-
+/**
+ * @brief Determine the XML read method based on the file stream and system memory
+ * @param fs: pointer to the FILESTREAM structure
+ * @return: the determined read method (STREAM_AS_FILE, STREAM_AS_CHUNKS, or STREAM_AS_ERROR)
+ */
 int determine_xml_read_method( FILESTREAM *fs )
 {
 
@@ -284,24 +302,28 @@ int determine_xml_read_method( FILESTREAM *fs )
     free_percent_bytes = ( free_system_memory * ALLOWED_RAM_USAGE ) / 100;
     filesize_delta = free_percent_bytes - fs->file_size;
 
-    LOG( "System Memory: %14zu bytes\n"
-         "Used Memory  : %14zu bytes\n"
-         "Free Memory  : %14zu bytes\n"
-         "File Size    : %14zu bytes\n"
-         "Free Percent : %14zu %%\n",
-         system_memory,
-         used_system_memory,
-         free_system_memory,
-         fs->file_size,
-         free_percent );
-    LOG( "%-3zu%% Free bytes: %14zu bytes\n"
-         "Filesize delta : %14zu bytes\n"
-         "%zu%% of free bytes used\n",
-         ALLOWED_RAM_USAGE,
-         free_percent_bytes,
-         filesize_delta,
-         ( 100 ) - ( filesize_delta * 100 ) / free_percent_bytes
-    );
+    if ( LOG_PARSING_MEMORY == TRUE )
+    {
+        LOG( "System Memory: %14zu bytes\n"
+             "Used Memory  : %14zu bytes\n"
+             "Free Memory  : %14zu bytes\n"
+             "File Size    : %14zu bytes\n"
+             "Free Percent : %14zu %%\n",
+             system_memory,
+             used_system_memory,
+             free_system_memory,
+             fs->file_size,
+             free_percent );
+        LOG( "%-3zu%% Free bytes: %14zu bytes\n"
+             "Filesize delta : %14zu bytes\n"
+             "%zu%% of free bytes used\n",
+             ALLOWED_RAM_USAGE,
+             free_percent_bytes,
+             filesize_delta,
+             ( 100 ) - ( filesize_delta * 100 ) / free_percent_bytes
+        );
+    }
+
 
 
     // How big is our file?
@@ -316,7 +338,10 @@ int determine_xml_read_method( FILESTREAM *fs )
 
     return STREAM_AS_FILE;
 }
-
+/**
+ * @brief Begin reading the SMS data from the XML file
+ * @param fs: pointer to the FILESTREAM structure
+ */
 void begin_read_sms_new( FILESTREAM *fs )
 {
     int method;
@@ -334,6 +359,8 @@ void begin_read_sms_new( FILESTREAM *fs )
 
     // Let's determine if we need to read it all as one file, or as in chunks.
     method = determine_xml_read_method( fs );
+    fs->accessed = time( NULL );
+
     xml_data = ( char * )malloc( xml_data_len + 1 );
     if ( !xml_data )
     {
