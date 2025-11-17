@@ -53,6 +53,9 @@
 
 #pragma once
 #include <windows.h>
+#include "nano-sql.h"
+#include "nano-io.h"
+#include "nano-sms.h"
 
 #define WIN32_LEAN_AND_MEAN 
 

@@ -41,6 +41,9 @@
 #include "nano-io.h"
 #include "nano-sms.h"
 
+
+
+
 // Globals for this scope.
 
 char stream_scratch[ STREAM_SCRATCH ] = "\0"; // The scratch buffer for reading.
@@ -883,3 +886,98 @@ size_t get_free_system_memory( void )
     GlobalMemoryStatusEx( &statex );
     return ( size_t )statex.ullAvailPhys;
 }
+
+TOKEN *new_token( void )
+{
+    TOKEN *token = ( TOKEN * )malloc( sizeof( TOKEN ) );
+    if ( token == NULL )
+    {
+        return NULL; // Memory allocation failed.
+    }
+    token->type = TOKEN_NONE;
+    token->value = NULL;
+    token->len = 0;
+    token->last_token = NULL;
+    token->next_token = NULL;
+    return token;
+
+
+}
+
+BOOL free_token( TOKEN *token )
+{
+    if ( token == NULL )
+    {
+        return FALSE;
+    }
+    if ( token->value )
+    {
+        free( token->value );
+    }
+    if ( token->last_token )
+        token->last_token = NULL;
+    if ( token->next_token )
+        token->next_token = NULL;
+    token->point = 0;
+    token->type = TOKEN_NONE;
+    token->size = 0;
+    token->len = 0;
+    free( token );
+    return TRUE;
+}
+
+
+/* All of these token functions (ie. pop push reroll,etc)
+   take a FILESTREAM pointer as input and return a size_t value.
+   it uses the fs->buffer as its input, returning a bytesread as
+   a return call. Unless specified otherwise.
+   */
+// WARNING: This is not very performant. Use with caution.
+// We've likely found an incomplete token, so we need to go back to the last valid one.
+// typically from a chunk read leaving a 'string' unfinished. So we'll pop back and
+// hope the parser reads more into the buffer and tries again.
+size_t reroll_to_last_valid_token( FILESTREAM *fs )
+{
+    if ( fs == NULL )
+    {
+        return REROLL_BADFS;
+    }
+    if ( fs->token_count == 0 )
+    {
+        return 0; // No tokens to reroll.
+    }
+    fs->cur_token = fs->last_token;
+    return 1;
+
+}
+
+size_t push_token( FILESTREAM *fs, enum token_type token )
+{
+    if ( fs == NULL )
+    {
+        return TOKENPUSH_BADFS;
+    }
+    if ( fs->token_count >= MAX_TOKEN )
+    {
+        return TOKENPUSH_HIGHTOKEN;
+    }
+    fs->tokens[ fs->token_count ].type = token;
+    fs->token_count++;
+    return 1;
+}
+
+size_t pop_token( FILESTREAM *fs )
+{
+    if ( fs == NULL )
+    {
+        return POP_BADFS;
+    }
+    if ( fs->token_count == 0 )
+    {
+        return 0; // No tokens to pop.
+    }
+    fs->token_count--;
+    return 1;
+}
+
+

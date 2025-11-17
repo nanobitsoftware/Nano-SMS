@@ -1,5 +1,3 @@
-
-
 /* Nano-SMS: My interpretation and creation of an app to read SMS BACKUP AND RESTORE files.
    All other apps I have used, have been web based, and cannot process large files well, if at
    at all (All my tests have resulted in crashes. Even though I have 96gB of memory avail)
@@ -75,6 +73,14 @@
 #define STREAM_ERROR (-2)   /**< Generic error indicator. */
 #define STREAM_UNKNOWN (-3) /**< Unknown error indicator. */
 #define MEMORY_ERROR (-4)   /**< Memory allocation failure indicator. */
+#define TOKENPUSH_HIGHTOKEN (-5)
+#define TOKENPUSH_BADFS (-6)
+#define POP_BADFS (-7)
+#define REROLL_BADFS (-8)
+#define REROLL_NOTOKENS (-9)
+
+
+#define MAX_TOKEN 2048
 
 /**
  * Scratch buffer used for temporary reads. Size measured in bytes.
@@ -83,7 +89,8 @@
 #define STREAM_SCRATCH (8192) // 8kB scratch buffer for reading.
 
 typedef struct filestream FILESTREAM; /**< Forward typedef for the file stream struct. */
-
+typedef struct _token TOKEN;       /**< Forward typedef for the token type enum. */
+typedef struct sym_table SYM_TABLE;
 /**
  * Convenience macro to test if a stream has an error state.
  * Evaluates to a boolean-like expression (TRUE/FALSE).
@@ -177,6 +184,7 @@ typedef struct filestream FILESTREAM; /**< Forward typedef for the file stream s
  */
 static size_t ALLOWED_RAM_USAGE = 40; // This is in percentage of total system memory
 
+
 /**
  * Token types used by the file parsing/tokenizing utilities.
  * Each enumerant represents a syntactic token encountered while scanning.
@@ -198,6 +206,7 @@ enum token_type
     TOKEN_SEMI, /* Semicolon ; */
     TOKEN_COMMA, /* Comma , */
     TOKEN_DOT, /* Dot . */
+    TOKEN_STAR, /* Star, astrics, multiply - */
     TOKEN_PIPE, /* Pipe | */
     TOKEN_AMPERSAND, /* Ampersand & */
     TOKEN_HASH, /* Hash # */
@@ -219,6 +228,134 @@ enum token_type
     TOKEN_NULL /* Null */
 };
 
+struct sym_table
+{
+    char* symbol;
+    enum token_type type;
+};
+
+
+enum value_type
+{
+    VALUE_TYPE_NONE,
+    VALUE_TYPE_STRING,
+    VALUE_TYPE_NUMBER,
+    VALUE_TYPE_LITERAL,
+    VALUE_TYPE_MEDIA,
+    VALUE_TYPE_DATA,
+    VALUE_TYPE_ATTRIB,
+    VALUE_TYPE_NAME,
+    VALUE_TYPE_ID,
+    VALUE_TYPE_MISC
+
+
+};
+
+/**
+ * @struct _token
+ * @brief Represents a lexical token extracted from the input stream.
+ *
+ * This structure maintains a single token with its metadata, including type, value,
+ * and positional information. Tokens are organized in a tree-like structure via
+ * navigation pointers, allowing hierarchical parsing and traversal.
+ *
+ * Note: This is NOT a standard linked list. The `last_token` and `next_token`
+ * pointers are provided for convenient mathematical/logical relationships during
+ * parsing, but do not form a doubly-linked list structure.
+ *
+ * Memory Management:
+ *  - The `value` field must be explicitly allocated and freed by the caller.
+ *  - All other fields are managed by the token creation/destruction functions.
+ */
+struct _token
+{
+    /* ===== Navigation and Hierarchy ===== */
+
+    /**
+     * Pointer to the previously parsed token in the parse sequence.
+     * May be NULL if this is the first token or if no prior token exists.
+     * Used for backtracking or context lookup during parsing.
+     */
+    TOKEN* last_token;
+
+    /**
+     * Pointer to the next logical token in the parse sequence.
+     * Used for lookahead and forward reference during parsing.
+     * Note: This is NOT part of a linked list; it's a convenience reference.
+     */
+    TOKEN* next_token;
+
+    /**
+     * Pointer to the root token of the parse tree or hierarchy.
+     * Allows traversal back to the top-level token in nested structures.
+     * May be NULL for root-level tokens or uninitialized contexts.
+     */
+    TOKEN* root;
+
+    /* ===== Type Information ===== */
+
+    /**
+     * Enumerated type of this token (e.g., TOKEN_OPEN_LT, TOKEN_STRING, etc.).
+     * Determines the syntactic role and processing behavior of this token.
+     * @see enum token_type for valid values.
+     */
+    enum token_type type;
+
+    /**
+     * Semantic type of the token's value content (e.g., VALUE_TYPE_STRING, VALUE_TYPE_NUMBER).
+     * Distinguishes between different interpretations of the value field.
+     * @see enum value_type for valid values.
+     */
+    enum value_type val_type;
+
+    /* ===== Value Data ===== */
+
+    /**
+     * Pointer to the dynamically allocated string value of this token.
+     * The caller is responsible for allocating and freeing this memory.
+     * May be NULL if the token has no string representation.
+     * Use `len` to determine the valid length of this string.
+     */
+    char* value;
+
+    /**
+     * Length of the string pointed to by `value` in bytes.
+     * Does not include null terminator if present.
+     * Used for bounds checking and efficient string operations.
+     */
+    size_t len;
+
+    /**
+     * Total size of the value data in bytes, including any padding or metadata.
+     * May differ from `len` depending on internal allocation strategies.
+     * Useful for memory management and allocation tracking.
+     */
+    size_t size;
+
+    /* ===== Position Tracking ===== */
+
+    /**
+     * Raw pointer to the position in the input stream buffer where this token was found.
+     * Only valid when the stream is NOT operating in chunk mode.
+     * In chunk mode, use `str_start` and `str_end` instead for position tracking.
+     * May be NULL if position tracking is disabled or unavailable.
+     */
+    char* point;
+
+    /**
+     * Starting position (offset) of this token within the source data.
+     * Represents the index where the token begins, useful for error reporting
+     * and source mapping during parsing.
+     */
+    int str_start;
+
+    /**
+     * Ending position (offset) of this token within the source data.
+     * Represents the index where the token ends, providing range information
+     * for the complete token span in the source.
+     */
+    int str_end;
+};
 /**
  * filestream - in-memory buffer and metadata used for streaming large files.
  *
@@ -244,6 +381,7 @@ enum token_type
  */
 struct filestream
 {
+
     char* buffer;        // The buffer to hold the file data. Allocated dynamically, used for streaming file contents.
     char file_path[_MAX_PATH]; // The path to the file. Stores the full path for reference and operations.
     char file_name[_MAX_FNAME]; // The name of the file. Used for display/logging and file management.
@@ -258,6 +396,8 @@ struct filestream
     time_t modified;     // The time the file was last modified. Useful for file change detection.
     time_t accessed;     // The time the file was last accessed. For tracking usage and access patterns.
     FILE* file;          // The file pointer. Standard C FILE* used for file I/O operations.
+    TOKEN         tokens[MAX_TOKEN];
+    size_t token_count; // TOtal counts overall.
     int last_token;      // The last token read from the file. Used in parsing routines.
     int cur_token;       // The current token being processed. For stateful parsing.
     int last_error;      // Error flag. Stores the last error code encountered.
@@ -450,3 +590,5 @@ BOOL _init_fs( void );
 size_t get_total_system_memory( void );
 size_t get_used_system_memory( void );
 size_t get_free_system_memory( void );
+TOKEN* new_token( void );
+BOOL free_token( TOKEN* token );

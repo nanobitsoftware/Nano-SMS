@@ -191,6 +191,7 @@
     <ClCompile Include="src\nano-io.c" />
     <ClCompile Include="src\memory.c" />
     <ClCompile Include="src\nano-sms.c" />
+    <ClCompile Include="src\nano-sql.c" />
     <ClCompile Include="src\NWC_main.c" />
     <ClCompile Include="src\SMS-GUI.c" />
     <ClCompile Include="src\sqlite3\sqlite3.c" />
@@ -201,6 +202,7 @@
   <ItemGroup>
     <ClInclude Include="src\nano-io.h" />
     <ClInclude Include="src\nano-sms.h" />
+    <ClInclude Include="src\nano-sql.h" />
     <ClInclude Include="src\NWC.h" />
     <ClInclude Include="src\sms-language.h" />
     <ClInclude Include="src\sms_db.h" />

@@ -119,22 +119,48 @@ static size_t xml_doctype_len = 0; // Length of doctype buffer.
 static size_t xml_entity_len = 0; // Length of entity buffer.
 static size_t xml_processing_len = 0; // Length of processing buffer.
 
-#define MAX_TOKEN 2048 // Max tokens allowed in any given 'line'
 
-struct lex
-{
-    enum token_type type; // Define in nano-io.h
-    char *value; // Pointer to a char of our value.
-    char *point; // Pointer to the position in the data where this token was found.
-    size_t size; // Size o the 'value'
-    int  str_start; // Starting index in the data. Only returned when we're in a string literal.
-    int  str_end; // Ending index in the data.
 
-};
 
-struct lex xml_tokens[ MAX_TOKEN ];
+
+TOKEN xml_tokens[ MAX_TOKEN ];
 static size_t xml_token_count = 0;
 
+
+struct sym_table xml_symbols[] =
+{
+    { "<", TOKEN_OPEN_LT },
+    { ">", TOKEN_CLOSE_GT },
+    { "{", TOKEN_OPEN_BK },
+    { "}", TOKEN_CLOSE_BK },
+    { "*", TOKEN_STAR },
+    { "(", TOKEN_OPEN_PR },
+    { ")", TOKEN_CLOSE_PR },
+    { "[", TOKEN_OPEN_SQBK },
+    { "]", TOKEN_CLOSE_SQBK },
+    { "?", TOKEN_QUEST },
+    { "!", TOKEN_EXCLAMATION },
+    { ":", TOKEN_COLON },
+    { ";", TOKEN_SEMI },
+    { ",", TOKEN_COMMA },
+    { ".", TOKEN_DOT },
+    { "|", TOKEN_PIPE },
+    { "&", TOKEN_AMPERSAND },
+    { "#", TOKEN_HASH },
+    { "$", TOKEN_DOLLAR },
+    { "%", TOKEN_PERCENT },
+    { "^", TOKEN_CARET },
+    { "~", TOKEN_TILDE },
+    { "`", TOKEN_BACK_TICK },
+    { "'", TOKEN_SQUOTE },
+    { "\"",TOKEN_QUOTE },
+    { "\\",TOKEN_BACKSLASH },
+    { "=", TOKEN_EQUALS },
+    { "-", TOKEN_DASH },
+    { "+", TOKEN_PLUS },
+    { "/", TOKEN_FSLASH },
+    { NULL,TOKEN_NONE }
+};
 
 
 
@@ -180,8 +206,25 @@ void  init_tokens( void )
     for ( i = 0; i < MAX_TOKEN; i++ )
     {
         xml_tokens[ i ].type = TOKEN_NONE;
+        xml_tokens[ i ].val_type = VALUE_TYPE_NONE;
+        xml_tokens[ i ].value = NULL;
+        xml_tokens[ i ].len = 0;
+        xml_tokens[ i ].point = NULL;
+        xml_tokens[ i ].last_token = NULL;
+        xml_tokens[ i ].next_token = NULL;
+        xml_tokens[ i ].root = NULL;
+        xml_tokens[ i ].size = 0;
+        xml_tokens[ i ].str_start = 0;
+        xml_tokens[ i ].str_end = 0;
+
+
     }
 }
+
+
+
+
+
 
 
 // Read chunk of the fs into a buffer. Used for if we will use too much memory.
@@ -229,9 +272,18 @@ size_t chunk_xml_buffer( FILESTREAM *fs, char *buffer, size_t buffer_size, size_
             break; // End of file reached
         }
         memcpy( buffer + total_bytes_read, fs->buffer + fs->pos - bytes_read, bytes_read );
+
         total_bytes_read += bytes_read;
         bytes_to_read -= bytes_read;
+        fs->seek_pos += bytes_read;
+        fs->file_read += bytes_read;
+
     }
+    // drop old fs->buffer
+    if ( fs->buffer )
+        free( fs->buffer );
+    fs->buffer = buffer; // Point fs->buffer to our new buffer.
+    fs->pos = 0; // Reset position for next read.
     return total_bytes_read;
 }
 
@@ -270,7 +322,15 @@ size_t fill_xml_buffer( FILESTREAM *fs, char *buffer )
         }
         memcpy( buffer + total_bytes_read, fs->buffer + fs->pos - bytes_read, bytes_read );
         total_bytes_read += bytes_read;
+        fs->seek_pos += bytes_read;
+        fs->file_read += bytes_read;
+
     }
+    if ( fs->buffer )
+        free( fs->buffer );
+    fs->buffer = buffer; // Swap her around.
+
+    fs->pos = 0; // Reset position for next read.
     return total_bytes_read;
 
 }
@@ -344,6 +404,7 @@ int determine_xml_read_method( FILESTREAM *fs )
  */
 void begin_read_sms_new( FILESTREAM *fs )
 {
+    BOOL running = FALSE;
     int method;
 
     if ( !fs )
@@ -359,9 +420,10 @@ void begin_read_sms_new( FILESTREAM *fs )
 
     // Let's determine if we need to read it all as one file, or as in chunks.
     method = determine_xml_read_method( fs );
+
     fs->accessed = time( NULL );
 
-    xml_data = ( char * )malloc( xml_data_len + 1 );
+    //xml_data = ( char * )malloc( xml_data_len + 1 );
     if ( !xml_data )
     {
         fprintf( stderr, "Failed to allocate memory for XML data\n" );
@@ -369,8 +431,66 @@ void begin_read_sms_new( FILESTREAM *fs )
 
     }
 
-    memset( xml_data, 0, xml_data_len + 1 );
-    size_t bytes_read = fs_read( fs, xml_data_len );
+    memset( xml_data, 0, xml_data_len + 1 ); // Optimize this out.
+
+    running = TRUE;
+    while ( running == TRUE )
+    {
+        if ( method == STREAM_AS_FILE )
+        {
+            size_t bytes_read = fill_xml_buffer( fs, xml_data );
+            if ( bytes_read != xml_data_len )
+            {
+                fprintf( stderr, "Failed to read entire XML file into memory\n" );
+                free( xml_data );
+                xml_data = NULL;
+                return;
+            }
+            do_parse( fs, xml_data, xml_data_len, FALSE );
+            running = FALSE; // We're done.
+        }
+        else if ( method == STREAM_AS_CHUNKS )
+        {
+            size_t chunk_size = BUFFER_GROW; // Read in 4mb chunks.
+            size_t bytes_read = chunk_xml_buffer( fs, xml_data, xml_data_len, chunk_size );
+            if ( bytes_read == xml_data_len )
+            {
+                running = FALSE; // We're done.
+            }
+            else if ( bytes_read < xml_data_len )
+            {
+                // Keep going.
+                do_parse( fs, xml_data, bytes_read, TRUE );
+                continue;
+            }
+            else
+            {
+                fprintf( stderr, "Failed to read entire XML file into memory\n" );
+                free( xml_data );
+                xml_data = NULL;
+                return;
+            }
+        }
+        else
+        {
+            fprintf( stderr, "Error determining XML read method\n" );
+            free( xml_data );
+            xml_data = NULL;
+            return;
+        }
+
+    }
+
+
+
+
+
+
+
+
+
+
+    /* size_t bytes_read = fs_read( fs, xml_data_len );
     if ( bytes_read != xml_data_len )
     {
         fprintf( stderr, "Failed to read entire XML file into memory\n" );
@@ -379,7 +499,38 @@ void begin_read_sms_new( FILESTREAM *fs )
         return;
     }
     xml_data_pos = 0; // Start at the beginning of the data.
+    */
 }
+
+
+BOOL do_parse( FILESTREAM *fs, char *data, size_t data_len, BOOL is_chunk )
+{
+    BOOL chunking = is_chunk;
+    size_t last_token_pos = 0;
+    size_t cur_token_pos = 0;
+    size_t next_token_pos = 0;
+    size_t len = 0;
+
+
+    enum token_type cur_token, last_token, next_token;
+    char *scratch_buf;
+
+
+    if ( !fs || !data || data_len == 0 )
+    {
+        fprintf( stderr, "Invalid arguments provided to do_parse\n" );
+        return FALSE;
+    }
+
+    // Perform XML parsing here.
+    // ...
+
+
+
+    return TRUE;
+}
+
+
 
 
 /* Function to create a new SMS_BACKUP structure

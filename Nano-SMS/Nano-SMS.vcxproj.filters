@@ -48,6 +48,9 @@
     <ClCompile Include="src\NWC_main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\nano-sql.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\NWC.h">
@@ -69,6 +72,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\sms_db.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\nano-sql.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

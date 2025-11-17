@@ -47,6 +47,9 @@
 
 
 
+#ifndef NANO_SMS_XML_H
+#define NANO_SMS_XML_H
+
 #include <time.h>
 #include "nano-io.h"
 
@@ -128,3 +131,6 @@ int determine_xml_read_method( FILESTREAM* fs );
 void begin_read_sms_new( FILESTREAM* fs );
 size_t fill_xml_buffer( FILESTREAM* fs, char* buffer );
 size_t chunk_xml_buffer( FILESTREAM* fs, char* buffer, size_t buffer_size, size_t chunk_size );
+BOOL do_parse( FILESTREAM* fs, char* data, size_t data_len, BOOL is_chunk );
+
+#endif // NANO_SMS_XML_H
