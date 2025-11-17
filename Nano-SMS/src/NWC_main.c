@@ -4,7 +4,6 @@
    that it exists in as well. So consider this the master of NWC_main.c for now.
   */
 
-
   /* Nomenclature is bound to change in the near future (parent moving to simply 'window' and the like)
  * so do not keep too much stock in the current names. */
 
@@ -25,13 +24,6 @@
 #include "nano-sms.h"
 #include "NWC.h"
 
-
-
-
-
-
-
-
 int IDX;
 BOOL INITIALIZED;
 
@@ -39,7 +31,6 @@ NWC_PARENT *fake_window; // So we never return NULL
 NWC_CTRL *fake_control; // So we never return NULL
 
 static HANDLE hDevMode, hDevNames;
-
 
 #undef SetFocus
 
@@ -109,7 +100,6 @@ NWC_PARENT *parent_initialize( void )
     p_window->controls = ( NWC_WIDGET ** )malloc( sizeof( *p_window->controls ) * MAX_CONTROLS );
     p_window->controls[ 0 ] = NULL;
     ZeroMemory( &p_window->pr, sizeof( p_window->pr ) );
-
 
     return p_window;
 }
@@ -1920,7 +1910,6 @@ int get_max_control_heigth( NWC_PARENT *p )
     return cur_height;
 }
 
-
 /* Go through all the parents and children, turning them in to a
  * list that we can print out or view as a user to see what our
  * layouts are, without viewing the windows. Has no real use outside
@@ -2055,17 +2044,14 @@ void NWC_BoundBox( NWC_PARENT *p, int x, int y )
     }
 }
 
-
 NWC_Getprinter( NWC_PARENT *p )
 {
     PRINTDLG pd;
     PAGESETUPDLG ps;
     ZeroMemory( &ps, sizeof ps );
 
-
     if ( !p )
         return FALSE;
-
 
     ps.lStructSize = sizeof ps;
     ps.Flags = PSD_RETURNDEFAULT;
@@ -2075,8 +2061,6 @@ NWC_Getprinter( NWC_PARENT *p )
 
     hDevMode = ps.hDevMode;
     hDevNames = ps.hDevNames;
-
-
 
     pd = p->pr;
 
@@ -2114,5 +2098,3 @@ COLLATE_CTRLS *new_collate_ctrl( void )
 
     return ctrl;
 }
-
-

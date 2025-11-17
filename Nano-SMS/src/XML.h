@@ -7,7 +7,6 @@
    an html file, splitting to keep size issues from cropping up. THat is for another day,
    and may even be put into this program as well as cross platform.
 
-
     This program is not meant to be a full replacement for the SMS Backup and Restore app.
     It is meant to be a tool to read the files, and extract the data you want, and then
     save it to a file, or copy it to the clipboard, or whatever you want to do with it.
@@ -45,16 +44,13 @@
 
     */
 
-
-
 #ifndef NANO_SMS_XML_H
 #define NANO_SMS_XML_H
 
 #include <time.h>
 #include "nano-io.h"
 
-
-// !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! 
+// !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !!
 /* This "XML" stuff isn't going to be any type of standards compliant
     whatsoever. It will mimic XML parsing, and will probably work as
     a parser with some minor modifications; however, this code is meant
@@ -62,23 +58,20 @@
 
     // THIS IS NOT A STANDARDS COMPLIANT XML PARSER ON PURPOSE!
 
-// !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! 
+// !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !! !! WARNING !!
 
     // It is very important for the "name" and "value" properties of these
     // sheets that we get the exact string length before malloc. Some of the
-    // properties with SMS backup and restart are gigantic. And need to be 
+    // properties with SMS backup and restart are gigantic. And need to be
     // Treated as such before throwing memeory off to them. Remember,
     // Nanobit keeps things small. So we'll do our own precious way of making
     // a 16gb xml file turn into just a few hundred mb of memory :)
-
 
     // Safeguards
 #define MAX_PARENT 1024 * 4
 #define MAX_CHILD MAX_PARENT * 4
 #define MAX_STGRING_LENGTH  1024 * 1024 // 1mb max string length. This is a safeguard, not a hard limit.
 #define MSL MAX_STRING_LENGTH // just an alias.
-
-
 
 typedef struct xml_node_parent XML_NODE_PARENT;
 typedef struct xml_node_child XML_NODE_CHILD;
@@ -96,7 +89,6 @@ struct xml_node_parent {
     int open_brackets;
     int closed_brackets; // For sanity checking down the line
     int child_count; // Number of child nodes.
-
 };
 
 struct xml_node_child {
@@ -122,9 +114,6 @@ struct xml_node_media {
     XML_NODE_MEDIA* next; // Next media item in the list.
     XML_NODE_PARENT* parent;
 };
-
-
-
 
 void  init_tokens( void );
 int determine_xml_read_method( FILESTREAM* fs );

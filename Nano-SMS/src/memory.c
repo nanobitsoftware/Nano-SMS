@@ -20,7 +20,6 @@
 * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 */
 
-
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -189,7 +188,6 @@ void add_heap( HEAP *hp )
     return;
 }
 /*
-
 
 void show_heap ( void )
 {
@@ -545,7 +543,7 @@ void *nano_realloc( void *seg, size_t sz, const char *file, int line )
         aligned_size++;
     }
 
-    char *header = ( char * )seg - sizeof( size_t );
+    char *header = seg;//= ( char * )seg - sizeof( size_t );
     size_t stored = *( ( size_t * )header );
     if ( ( stored & MALLOC_MAGIC ) != MALLOC_MAGIC )
     {

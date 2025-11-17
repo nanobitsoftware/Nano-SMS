@@ -44,14 +44,11 @@ specific file that theyre in a the time.
 #include <ctype.h>
 #include <corecrt.h>
 
-
 #include "stdbool.h"
 
 #include "sqlite3/sqlite3.h"
 
-
 #include "nano-sms.h"
-
 
 char str_empty[ 1 ];
 char *string_space;
@@ -65,8 +62,6 @@ int str_isnumber( const char *s );
 
 #define is_number(x) str_isnumber(x)
 #define is_number2(x) str_isnumber(x)
-
-
 
 /**
  * fround - Rounds a floating point number to two decimal places.

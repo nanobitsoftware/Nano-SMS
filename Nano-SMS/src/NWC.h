@@ -1,6 +1,4 @@
-
 #pragma once
-
 
 /* Header for the NWC_Main.c windowing system
 */
@@ -39,8 +37,6 @@ int current_parents;
 int max_parents;
 int current_gui; // Total windows, children, widgets, etc.
 unsigned long int nwc_memory_used;
-
-
 
 struct NWC_Parent
 {
@@ -122,7 +118,6 @@ struct window_controls
     NWC_PARENT* parent;
 };
 
-
 struct collate_ctrls
 {
     char* parent_name;
@@ -146,10 +141,6 @@ struct collate_window
     NWC_PARENT* parent;
     struct collate_ctrls** ctrls;
 };
-
-
-
-
 
 NWC_CHILD* create_child( NWC_PARENT* p_window, char* name );
 BOOL set_parent_config( NWC_PARENT* p_window, HWND hwnd, LRESULT* proc, int x, int y, int width, int heigth, HINSTANCE instance, BOOL on_top, unsigned long int window_options, unsigned long int style_options );

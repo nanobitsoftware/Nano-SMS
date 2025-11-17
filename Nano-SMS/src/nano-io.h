@@ -79,7 +79,6 @@
 #define REROLL_BADFS (-8)
 #define REROLL_NOTOKENS (-9)
 
-
 #define MAX_TOKEN 2048
 
 /**
@@ -184,7 +183,6 @@ typedef struct sym_table SYM_TABLE;
  */
 static size_t ALLOWED_RAM_USAGE = 40; // This is in percentage of total system memory
 
-
 /**
  * Token types used by the file parsing/tokenizing utilities.
  * Each enumerant represents a syntactic token encountered while scanning.
@@ -234,7 +232,6 @@ struct sym_table
     enum token_type type;
 };
 
-
 enum value_type
 {
     VALUE_TYPE_NONE,
@@ -247,8 +244,6 @@ enum value_type
     VALUE_TYPE_NAME,
     VALUE_TYPE_ID,
     VALUE_TYPE_MISC
-
-
 };
 
 /**
@@ -381,7 +376,6 @@ struct _token
  */
 struct filestream
 {
-
     char* buffer;        // The buffer to hold the file data. Allocated dynamically, used for streaming file contents.
     char file_path[_MAX_PATH]; // The path to the file. Stores the full path for reference and operations.
     char file_name[_MAX_FNAME]; // The name of the file. Used for display/logging and file management.
@@ -572,9 +566,11 @@ double double_to_human( size_t hr_size );
  *
  * @param fs Pointer to FILESTREAM to read from.
  * @param size Number of bytes to attempt to read.
- * @return Number of bytes actually read, or STREAM_EOF/STREAM_ERROR on failure.
+ * @return Number of bytes actually read (>= 0), or negative error code on failure.
+ *         Error codes: STREAM_EOF (-1), STREAM_ERROR (-2), MEMORY_ERROR (-4).
+ *         NOTE: Return type is int (not size_t) to properly handle error values.
  */
-size_t fs_read( FILESTREAM* fs, size_t size );
+long long int fs_read( FILESTREAM* fs, size_t size );
 
 /**
  * Initialize stream subsystem resources. Should be called once at startup.

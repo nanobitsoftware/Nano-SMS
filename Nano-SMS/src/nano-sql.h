@@ -12,7 +12,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 /* A t-buf is something I use from time to time when I am working with
    sql (specifically sqlite) and the software has a lot of stuff it
    wants to ingest into the database. Normally, software wil just feed
@@ -31,7 +30,6 @@
 
     */
 
-
 #pragma once
 #include "nano-io.h"
 #include "XML.h"
@@ -45,11 +43,9 @@
 #define GET_PRI(x) ((x) ? x->priority : (LOG_SQL_ERROR ("TBUF is NULL, cannot get priority."), -9999))
 #define PRI_COMP(x,y) ((GET_PRI(x) > GET_PRI(Y) ? x :y ))
 
-
 #define MAX_TBUF 1024 // Max number of t-bufs we can have at once. Will force a flush if exceeded.
 #define TBUF_GROW 4096 // How much to grow the t-buf by when needed. Will offer this ability.
 #define TBUF_MIN 24 // The minimum amount it must hold before a scheduled run is allowed.
-
 
 /*  The name of the game with sms reader is that we managed memory quite well, as
     some of the things we ingest can be quite large, even out pacing the amount of
@@ -61,8 +57,6 @@ typedef struct t_buf TBUF;
 typedef struct t_buf_manager TBUF_MAN;
 
 #define DEBUG_MODE_TBUF_FREE_SHIFT TRUE // Set to TRUE to enable debug mode for t-buf free operations.
-
-
 
 enum M_TYPE
 {
@@ -94,9 +88,6 @@ typedef struct t_buf
     BOOL in_use; // Is this buffer in use? Basically to make sure we're freeing these.
 } TBUF;
 
-
-
-
 // Function prototypes for t-buf management.
 static void init_tbuf_manager();
 BOOL free_tbuf_man( void );
@@ -106,4 +97,3 @@ BOOL tbuf_add_data( TBUF* tbuf, const char* data, size_t len );
 BOOL tbuf_flush( TBUF* tbuf, sqlite3* db );
 size_t tbuf_get_used( TBUF* tbuf );
 size_t tbuf_get_size( TBUF* tbuf );
-

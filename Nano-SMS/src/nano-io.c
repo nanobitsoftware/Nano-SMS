@@ -37,12 +37,8 @@
 #include <time.h>
 #include <stdarg.h>
 
-
 #include "nano-io.h"
 #include "nano-sms.h"
-
-
-
 
 // Globals for this scope.
 
@@ -90,7 +86,6 @@ BOOL _init_fs( void )
     return TRUE;
 }
 
-
 /**
  * @brief Register a file stream in the internal registry.
  *
@@ -117,12 +112,10 @@ BOOL _register_fs_handle( FILESTREAM *fs )
         if ( _fs_registry.streams )
         {
             new_streams = ( FILESTREAM ** )realloc( _fs_registry.streams, new_capacity * sizeof( FILESTREAM * ) );
-
         }
         else
         {
             new_streams = ( FILESTREAM ** )malloc( new_capacity * sizeof( FILESTREAM * ) );
-
         }
 
         _fs_registry.streams = new_streams;
@@ -282,8 +275,6 @@ BOOL _free_fs_stream( FILESTREAM *fs, int line, char *file )
         fs->is_open = FALSE;
     }
 
-
-
     if ( !_unregister_fs_handle( fs ) )
     {
         LOG( "Unable to unregister file stream within the system. Possible memory leak: %s / %d", file, line );
@@ -441,8 +432,6 @@ FILESTREAM *fs_open( FILESTREAM *fs, const char *path, const char *mode )
 
     fs->file = fopen( path, mode );
 
-
-
     if ( fs->file == NULL )
     {
         if ( fsnew != NULL )
@@ -454,7 +443,6 @@ FILESTREAM *fs_open( FILESTREAM *fs, const char *path, const char *mode )
             fs->last_error = STREAM_ERROR;
             fs->mode = MODE_ERROR;
             fs->state = STATE_ERRORS;
-
         }
         LOG( "Unable to open %s within mode %s, returning NULL.", path, mode );
         return NULL;
@@ -483,7 +471,6 @@ FILESTREAM *fs_open( FILESTREAM *fs, const char *path, const char *mode )
     {
         fs->size_type = TYPE_MEGABYTE;
         fs->hr_size = ( double )fs->file_size / 1024 / 1024;
-
     }
     else if ( fs->file_size >= 1073741824 && fs->file_size < 1099511627776 )
     {
@@ -499,8 +486,6 @@ FILESTREAM *fs_open( FILESTREAM *fs, const char *path, const char *mode )
     {
         fs->size_type = TYPE_BYTE;
     }
-
-
 
     // Update the file path and name
     strncpy( fs->file_path, path, sizeof( fs->file_path ) - 1 );
@@ -560,8 +545,6 @@ FILESTREAM *fs_open( FILESTREAM *fs, const char *path, const char *mode )
         fs->mode = MODE_NONE;
     }
 
-
-
     fs->accessed = fs->opened;
     fs->modified = fs->opened;
     fs->is_open = TRUE;
@@ -616,7 +599,6 @@ BOOL fs_close( FILESTREAM *fs, BOOL cleanup )
         }
     }
 
-
     if ( cleanup )
     {
         return _free_fs_stream( fs, __LINE__, __FILE__ );
@@ -632,9 +614,7 @@ BOOL fs_close( FILESTREAM *fs, BOOL cleanup )
 /* logfs will report the structure to the logfile for debug purposes.*/
 void logfs( FILESTREAM *fs )
 {
-
     static char buf[ 2048 * 2 ];
-
 
     if ( !fs )
         return; // Need a valid struct.
@@ -681,10 +661,7 @@ void logfs( FILESTREAM *fs )
     );
     LOG( buf );
     LOG( "-------------------------------------------------------------\n\n" );
-
 }
-
-
 
 enum token_type token_from_char( char c )
 {
@@ -759,17 +736,17 @@ enum token_type token_from_char( char c )
 }
 
 /* fs_read: read from the filestream into the buffer.
- * Returns number of bytes read, or -1 on error.
+ * Returns number of bytes read, or negative error code on failure.
  * This function will read up to size bytes from the file into the buffer.
  * It will update the pos, length, and file_read fields of the FILESTREAM.
  * It will also set the eof field if the end of the file is reached.
  * The buffer is null-terminated after reading.
  * The buffer is resized if necessary to hold the data.
- * The function will return the number of bytes read, or -1 on error.
+ * The function will return the number of bytes read, or a negative error code on failure.
  * If the buffer is NULL, it will be allocated with a default size.
  * If size is 0, it will read until the end of the file.
  */
-size_t fs_read( FILESTREAM *fs, size_t size )
+long long int fs_read( FILESTREAM *fs, size_t size )
 {
     size_t i;
     time_t start, stop, total;
@@ -778,12 +755,12 @@ size_t fs_read( FILESTREAM *fs, size_t size )
 
     if ( fs == NULL || !fs->is_open || fs->file == NULL )
     {
-        return -1; // Invalid stream.
+        return STREAM_ERROR; // Changed from -1 to STREAM_ERROR constant. Invalid stream.
     }
     if ( fs->mode != MODE_READ && fs->mode != MODE_READWRITE && fs->mode != MODE_BINARY )
     {
         fs->last_error = STREAM_ERROR;
-        return -1; // Stream not opened in read mode.
+        return STREAM_ERROR; // Changed from -1 to STREAM_ERROR constant. Stream not opened in read mode.
     }
     if ( size == 0 )
     {
@@ -796,7 +773,7 @@ size_t fs_read( FILESTREAM *fs, size_t size )
         {
             GiveError( "ERROR!!_", FALSE );
             fs->last_error = MEMORY_ERROR;
-            return -1; // Memory allocation failed.
+            return MEMORY_ERROR; // Changed from -1 to MEMORY_ERROR constant. Memory allocation failed.
         }
         fs->size = BUFFER_INIT;
     }
@@ -807,8 +784,9 @@ size_t fs_read( FILESTREAM *fs, size_t size )
         if ( new_buffer == NULL )
         {
             GiveError( "ERROR", FALSE );
+
             fs->last_error = MEMORY_ERROR;
-            return -1; // Memory allocation failed.
+            return MEMORY_ERROR; // Changed from -1 to MEMORY_ERROR constant. Memory allocation failed.
         }
         fs->buffer = new_buffer;
         fs->size = size + 1;
@@ -826,10 +804,11 @@ size_t fs_read( FILESTREAM *fs, size_t size )
     {
         if ( ferror( fs->file ) )
         {
+            logfs( fs );
             LOG( "ERRORNO: %d", errno );
             GiveError( "ERROR_", FALSE );
             fs->last_error = STREAM_ERROR;
-            return -1; // Read error.
+            return STREAM_ERROR; // Changed from -1 to STREAM_ERROR constant. Read error.
         }
         if ( feof( fs->file ) )
         {
@@ -854,13 +833,10 @@ size_t fs_read( FILESTREAM *fs, size_t size )
     total = stop - start;
     LOG( "Time taken to count lines: %zu seconds\n", total );
 
-
-
-    fs->pos += bytes_read;
     fs->length += bytes_read;
     fs->file_read += bytes_read;
     fs->buffer[ fs->length ] = '\0'; // Null-terminate the buffer.
-    return ( int )bytes_read;
+    return ( long long  int )bytes_read; // Return as int to preserve negative error codes when called.
 }
 
 size_t get_total_system_memory( void )
@@ -900,8 +876,6 @@ TOKEN *new_token( void )
     token->last_token = NULL;
     token->next_token = NULL;
     return token;
-
-
 }
 
 BOOL free_token( TOKEN *token )
@@ -926,7 +900,6 @@ BOOL free_token( TOKEN *token )
     return TRUE;
 }
 
-
 /* All of these token functions (ie. pop push reroll,etc)
    take a FILESTREAM pointer as input and return a size_t value.
    it uses the fs->buffer as its input, returning a bytesread as
@@ -948,7 +921,6 @@ size_t reroll_to_last_valid_token( FILESTREAM *fs )
     }
     fs->cur_token = fs->last_token;
     return 1;
-
 }
 
 size_t push_token( FILESTREAM *fs, enum token_type token )
@@ -979,5 +951,3 @@ size_t pop_token( FILESTREAM *fs )
     fs->token_count--;
     return 1;
 }
-
-

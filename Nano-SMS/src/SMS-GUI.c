@@ -7,7 +7,6 @@
    an html file, splitting to keep size issues from cropping up. THat is for another day,
    and may even be put into this program as well as cross platform.
 
-
     This program is not meant to be a full replacement for the SMS Backup and Restore app.
     It is meant to be a tool to read the files, and extract the data you want, and then
     save it to a file, or copy it to the clipboard, or whatever you want to do with it.
@@ -44,3 +43,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     */
+#include <windows.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <math.h>
+#include <sys/types.h>
+#include <time.h>
+
+#include "nano-sms.h"
+#include "XML.h"
+#include "sms_db.h"
+#include "nano-io.h"
+#include "sqlite3/sqlite3.h"

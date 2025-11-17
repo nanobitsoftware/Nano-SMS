@@ -7,7 +7,6 @@
    an html file, splitting to keep size issues from cropping up. THat is for another day,
    and may even be put into this program as well as cross platform.
 
-
     This program is not meant to be a full replacement for the SMS Backup and Restore app.
     It is meant to be a tool to read the files, and extract the data you want, and then
     save it to a file, or copy it to the clipboard, or whatever you want to do with it.
@@ -45,10 +44,7 @@
 
     */
 
-
 // Boiler plate
-
-
 
 // Include NWC for our Windowing system
 
@@ -70,20 +66,12 @@
 #include <stdarg.h>
 #include <corecrt.h>
 
-
-
-
 #include "nano-sms.h"
 #include "nano-io.h"
 #include "sqlite3/sqlite3.h"
 #include "NWC.h"
 #include "sms_db.h"
 #include "XML.h"
-
-
-
-
-
 
 // Globals: We don't want to use them, but some times it's for the best,
 // Especially if we stick to the idea that using globals should be READ ONLY
@@ -96,19 +84,14 @@ SMS_BACKUP *sms_backup = NULL; // The SMS backup structure. Global entity.
 //  This function will be called at the start of the program to ensure that the database exists
 //  and that the necessary tables are created.
 
-
 void LOG( char *fmt, ... )
 {
-
     char buf[ 15000 ];
     va_list args;
     va_start( args, fmt );
     vsprintf( buf, fmt, args );
     va_end( args );
     write_buffer( buf );
-
-
-
 }
 
 void check_or_create_db( void )
@@ -126,7 +109,6 @@ void check_or_create_db( void )
     rc = sqlite3_exec( SMS_DB, CREATE_TABLES, NULL, 0, &SMS_DB_ERROR );
     if ( rc != SQLITE_OK )
 
-
     {
         fprintf( stderr, "SQL error: %s\n", SMS_DB_ERROR );
         GiveError( "Unable to create database file. Bailing, sorry!", FALSE );
@@ -137,16 +119,8 @@ void check_or_create_db( void )
     else
     {
         LOG( "Database created successfully." );
-
     }
-
-
-
-
 }
-
-
-
 
 // In WinMain, replace the allocation block with thread creation
 WINAPI WinMain( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
@@ -159,15 +133,21 @@ WINAPI WinMain( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
     FILESTREAM *fs;
     char buf[ 1024 ];
 
-
     _init_fs( );
-    //GiveError( "Hello from SMS!", TRUE );
 
     // Initialize our DB
     check_or_create_db( );
     sms_backup = XML_new( );
+    void *tttt;
+
+    tttt = malloc( 1024 );
+    int i;
+    for ( i = 1; i < 1024; i++ )
+    {
+        tttt = realloc( tttt, i * 1024 );
+    }
     fs = fs_open( NULL, "c:\\nanobit\\sms.xml", "r" );
-    if ( fs )
+    /*if ( fs )
     {
         size_t sread = 0;
 
@@ -188,6 +168,41 @@ WINAPI WinMain( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
     else
     {
         LOG( "Failed to open file stream for c:\\nanobit\\sms.xml" );
+    }
+    */
+    char *buffer;
+    BOOL ttt = TRUE;
+    buffer = malloc( 1024 * 4096 ); // 4gb buffer + 1kb extra for safety.
+
+    if ( !buffer )
+    {
+        GiveError( "Failed to allocate buffer for XML parsing.", TRUE );
+        return 0;
+    }
+
+    if ( !fs )
+    {
+        GiveError( "Failed to open file stream for c:\\nanobit\\sms.xml", TRUE );
+        free( buffer );
+        return 0;
+    }
+
+    while ( ttt )
+    {
+        size_t size;
+
+        size = chunk_xml_buffer( fs, buffer, 1024, 100 );
+
+        if ( size > 0 && buffer )
+        {
+            LOG( "Got a chunk: %zu bytes\r\n", size );
+        }
+
+        if ( !size )
+        {
+            ttt = FALSE;
+            break;
+        }
     }
 
     if ( fs )
@@ -213,6 +228,9 @@ WINAPI WinMain( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
              determine_xml_read_method( fs ) );
     GiveError( buf, FALSE );
     GiveError( "Within windows main function and will now be exiing.", TRUE );
+
+    free( buffer );
+
     exit( 12 );
 
     while ( GetMessage( &msg, NULL, 0, 0 ) )
@@ -238,17 +256,8 @@ WINAPI WinMain( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
 
     unregister_all_streams( ); // Clear all streams in case we have some.
 
-
     return ( int )msg.wParam;
 }
-
-
-
-
-
-
-
-
 
 // Function to initialize the SMS_BACKUP structure.
 SMS_BACKUP *init_sms_backup( )
@@ -869,9 +878,6 @@ MEDIA_ITEM *find_media_items_by_address_date_range_and_type( const SMS_BACKUP *b
     return NULL; // No media items by address, date range, and type.
 }
 
-
-
-
 void GiveError( char *wrong, BOOL KillProcess )
 {
     if ( wrong == NULL )
@@ -898,13 +904,3 @@ void GiveError( char *wrong, BOOL KillProcess )
         return;
     }
 }
-
-
-
-
-
-
-
-
-
-

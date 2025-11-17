@@ -7,7 +7,6 @@
    an html file, splitting to keep size issues from cropping up. THat is for another day,
    and may even be put into this program as well as cross platform.
 
-
     This program is not meant to be a full replacement for the SMS Backup and Restore app.
     It is meant to be a tool to read the files, and extract the data you want, and then
     save it to a file, or copy it to the clipboard, or whatever you want to do with it.
@@ -45,7 +44,6 @@
 
     */
 
-
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,14 +53,11 @@
 #include <sys/types.h>
 #include <time.h>
 
-
 #include "nano-sms.h"
 #include "XML.h"
-#include "sms_db.h" 
+#include "sms_db.h"
 #include "nano-io.h"
 #include "sqlite3/sqlite3.h"
-
-
 
 // I know this is a lot of 'global' variables, but this is a simple
 // parser, and I want to keep it simple. So deal with it.
@@ -72,7 +67,6 @@
 // than it's worth for this simple parser.
 
 FILESTREAM *xml_stream = NULL; // The file stream to read the XML data from.
-
 
 static long int xml_line_number = 0; // Keep track of the line number for error reporting.
 static long int xml_char_number = 0; // Keep track of the character number for error reporting.
@@ -119,13 +113,8 @@ static size_t xml_doctype_len = 0; // Length of doctype buffer.
 static size_t xml_entity_len = 0; // Length of entity buffer.
 static size_t xml_processing_len = 0; // Length of processing buffer.
 
-
-
-
-
 TOKEN xml_tokens[ MAX_TOKEN ];
 static size_t xml_token_count = 0;
-
 
 struct sym_table xml_symbols[] =
 {
@@ -162,8 +151,6 @@ struct sym_table xml_symbols[] =
     { NULL,TOKEN_NONE }
 };
 
-
-
 /*
   msg_box: 1=inbox, 2=sent, 3=draft, 4=outbox, 5=failed, 6=queued
   ct_cls: content class, 0-255, 0=personal, 1=advertisement, 2=informational, 3=auto
@@ -199,7 +186,6 @@ struct sym_table xml_symbols[] =
     * @return: 1 on success, -1 on failure
     */
 
-
 void  init_tokens( void )
 {
     int i;
@@ -216,16 +202,8 @@ void  init_tokens( void )
         xml_tokens[ i ].size = 0;
         xml_tokens[ i ].str_start = 0;
         xml_tokens[ i ].str_end = 0;
-
-
     }
 }
-
-
-
-
-
-
 
 // Read chunk of the fs into a buffer. Used for if we will use too much memory.
 // Mean to be called on a loop until EOF.
@@ -245,16 +223,15 @@ size_t chunk_xml_buffer( FILESTREAM *fs, char *buffer, size_t buffer_size, size_
         return 0;
     }
 
-
     size_t total_bytes_read = 0;
     size_t bytes_to_read = buffer_size;
     if ( buffer == NULL )
     {
-        buffer = ( char * )malloc( buffer_size + 1024 );
+        buffer = ( char * )nano_malloc( buffer_size + 1024, __FILE__, __LINE__ );
     }
     else
     {
-        buffer = ( char * )realloc( buffer, buffer_size + 1024 );
+        buffer = ( char * )nano_realloc( buffer, buffer_size + 1024, __FILE__, __LINE__ );
     }
     if ( !buffer )
     {
@@ -266,22 +243,35 @@ size_t chunk_xml_buffer( FILESTREAM *fs, char *buffer, size_t buffer_size, size_
 
     while ( total_bytes_read < buffer_size )
     {
-        size_t bytes_read = fs_read( fs, chunk_size );
+        // FIX: fs_read now returns int (can be negative for errors). Must check for errors explicitly
+        // before treating return value as size_t, otherwise negative error codes get cast to huge
+        // positive numbers (e.g., -1 becomes 0xFFFFFFFFFFFFFFFF), causing memcpy to overflow.
+        long long int bytes_read = fs_read( fs, chunk_size );
+
+        // FIX: Check for negative error codes first. Error constants are STREAM_EOF (-1),
+        // STREAM_ERROR (-2), MEMORY_ERROR (-4). These must be caught before attempting memcpy.
+        if ( bytes_read < 0 )
+        {
+            fprintf( stderr, "Error reading from file stream: %d\n", bytes_read );
+            break; // Error occurred during read
+        }
+
+        // FIX: Now safe to check for EOF (0 bytes read with no error)
         if ( bytes_read == 0 )
         {
             break; // End of file reached
         }
-        memcpy( buffer + total_bytes_read, fs->buffer + fs->pos - bytes_read, bytes_read );
+
+        // FIX: Now that we've validated bytes_read is positive, safe to use as size_t in memcpy
+        memcpy( buffer + total_bytes_read, fs->buffer, ( size_t )bytes_read );
 
         total_bytes_read += bytes_read;
         bytes_to_read -= bytes_read;
         fs->seek_pos += bytes_read;
-        fs->file_read += bytes_read;
-
     }
     // drop old fs->buffer
     if ( fs->buffer )
-        free( fs->buffer );
+        nano_free( fs->buffer, __FILE__, __LINE__ );
     fs->buffer = buffer; // Point fs->buffer to our new buffer.
     fs->pos = 0; // Reset position for next read.
     return total_bytes_read;
@@ -294,16 +284,15 @@ size_t chunk_xml_buffer( FILESTREAM *fs, char *buffer, size_t buffer_size, size_
  */
 size_t fill_xml_buffer( FILESTREAM *fs, char *buffer )
 {
-
     // Figure out size of file, make a buffer to match
     size_t file_size = fs->file_size;
     if ( buffer == NULL )
     {
-        buffer = ( char * )malloc( file_size + 1024 );
+        buffer = ( char * )nano_malloc( file_size + 1024, __FILE__, __LINE__ );
     }
     else
     {
-        buffer = ( char * )realloc( buffer, file_size + 1024 );
+        buffer = ( char * )nano_realloc( buffer, file_size + 1024, __FILE__, __LINE__ );
     }
     if ( !buffer )
     {
@@ -315,24 +304,36 @@ size_t fill_xml_buffer( FILESTREAM *fs, char *buffer )
     while ( total_bytes_read < file_size )
     {
         // TODO: Add ability to send a signal to the updater so we're not 'stuck' on GUI.
-        size_t bytes_read = fs_read( fs, file_size - total_bytes_read );
+        // FIX: fs_read now returns int (can be negative for errors). Must check for errors explicitly
+        // before treating return value as size_t, otherwise negative error codes get cast to huge
+        // positive numbers (e.g., -1 becomes 0xFFFFFFFFFFFFFFFF), causing memcpy to overflow.
+        long long int bytes_read = fs_read( fs, file_size - total_bytes_read );
+
+        // FIX: Check for negative error codes first. Error constants are STREAM_EOF (-1),
+        // STREAM_ERROR (-2), MEMORY_ERROR (-4). These must be caught before attempting memcpy.
+        if ( bytes_read < 0 )
+        {
+            fprintf( stderr, "Error reading from file stream: %d\n", bytes_read );
+            break; // Error occurred during read
+        }
+
+        // FIX: Now safe to check for EOF (0 bytes read with no error)
         if ( bytes_read == 0 )
         {
             break; // End of file reached
         }
-        memcpy( buffer + total_bytes_read, fs->buffer + fs->pos - bytes_read, bytes_read );
+
+        // FIX: Now that we've validated bytes_read is positive, safe to use as size_t in memcpy
+        memcpy( buffer + total_bytes_read, fs->buffer, ( size_t )bytes_read );
         total_bytes_read += bytes_read;
         fs->seek_pos += bytes_read;
-        fs->file_read += bytes_read;
-
     }
     if ( fs->buffer )
-        free( fs->buffer );
+        nano_free( fs->buffer, __FILE__, __LINE__ );
     fs->buffer = buffer; // Swap her around.
 
     fs->pos = 0; // Reset position for next read.
     return total_bytes_read;
-
 }
 /**
  * @brief Determine the XML read method based on the file stream and system memory
@@ -341,7 +342,6 @@ size_t fill_xml_buffer( FILESTREAM *fs, char *buffer )
  */
 int determine_xml_read_method( FILESTREAM *fs )
 {
-
     size_t system_memory;
     size_t free_system_memory;
     size_t free_percent;
@@ -383,8 +383,6 @@ int determine_xml_read_method( FILESTREAM *fs )
              ( 100 ) - ( filesize_delta * 100 ) / free_percent_bytes
         );
     }
-
-
 
     // How big is our file?
     if ( fs->file_size > free_system_memory || free_percent < ALLOWED_RAM_USAGE ||
@@ -428,7 +426,6 @@ void begin_read_sms_new( FILESTREAM *fs )
     {
         fprintf( stderr, "Failed to allocate memory for XML data\n" );
         return;
-
     }
 
     memset( xml_data, 0, xml_data_len + 1 ); // Optimize this out.
@@ -478,17 +475,7 @@ void begin_read_sms_new( FILESTREAM *fs )
             xml_data = NULL;
             return;
         }
-
     }
-
-
-
-
-
-
-
-
-
 
     /* size_t bytes_read = fs_read( fs, xml_data_len );
     if ( bytes_read != xml_data_len )
@@ -502,7 +489,6 @@ void begin_read_sms_new( FILESTREAM *fs )
     */
 }
 
-
 BOOL do_parse( FILESTREAM *fs, char *data, size_t data_len, BOOL is_chunk )
 {
     BOOL chunking = is_chunk;
@@ -511,10 +497,8 @@ BOOL do_parse( FILESTREAM *fs, char *data, size_t data_len, BOOL is_chunk )
     size_t next_token_pos = 0;
     size_t len = 0;
 
-
     enum token_type cur_token, last_token, next_token;
     char *scratch_buf;
-
 
     if ( !fs || !data || data_len == 0 )
     {
@@ -525,13 +509,8 @@ BOOL do_parse( FILESTREAM *fs, char *data, size_t data_len, BOOL is_chunk )
     // Perform XML parsing here.
     // ...
 
-
-
     return TRUE;
 }
-
-
-
 
 /* Function to create a new SMS_BACKUP structure
  * @return: pointer to the new SMS_BACKUP structure, or NULL on failure

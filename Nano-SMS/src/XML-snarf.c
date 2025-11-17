@@ -11,4 +11,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     */
+#include <windows.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include <math.h>
+#include <sys/types.h>
+#include <time.h>
+
+#include "nano-sms.h"
+#include "XML.h"
+#include "sms_db.h"
+#include "nano-io.h"
+#include "sqlite3/sqlite3.h"

@@ -1,18 +1,10 @@
 #pragma once
 
-
 /* This file will contain all the raw sql commands so that we cna send them
    to sqlite3 to create our databases at the beginning of the program launch.
    It will create the file inside the main directory if the file does not exist
 
   */
-
-
-
-
-
-
-
 
 #define SMS_CREATE_MEDIA_TABLE "CREATE TABLE IF NOT EXISTS \"nano_media\" (" \
 "\"msg_refid\"	INTEGER NOT NULL DEFAULT 0 UNIQUE," \
@@ -66,9 +58,6 @@
 	"\"file_location\"	TEXT NOT NULL DEFAULT 'somewhere'," \
 	"PRIMARY KEY(\"refid\")" \
 ");\n"
-
-
-
 
 #define CREATE_TABLES  SMS_CREATE_SMS_TABLE \
 SMS_CREATE_MSG_TABLE SMS_CREATE_MEDIA_TABLE SMS_CREATE_TABLE_STATS

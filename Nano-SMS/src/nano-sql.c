@@ -21,13 +21,11 @@ along with this program.If not, see < http://www.gnu.org/licenses/>.
 #include <sys/types.h>
 #include <time.h>
 
-
 #include "nano-io.h"
 #include "nano-sms.h"
 #include "nano-sql.h"
-#include "sms_db.h" 
+#include "sms_db.h"
 #include "sqlite3/sqlite3.h"
-
 
 /// <summary>
 /// Globals for this scope.
@@ -36,8 +34,6 @@ extern void LOG( char *fmt, ... );
 
 TBUF_MAN *buf_manager = NULL; // The global t-buf manager.
 BOOL tbuf_init = FALSE; // Have the t-bufs been initialized?
-
-
 
 // Internal function to initialize the t-buf manager.
 static void init_tbuf_manager( )
@@ -134,7 +130,6 @@ BOOL free_tbuf( TBUF *tbuf )
             }
             else
             {
-
                 buf_manager->tbufs[ i ] = NULL; // Clear last pointer.
             }
             buf_manager->count--;
@@ -178,7 +173,6 @@ size_t tbuf_get_size( TBUF *tbuf )
     return tbuf->size;
 }
 
-
 size_t tbuf_get_used( TBUF *tbuf )
 {
     if ( !tbuf )
@@ -188,7 +182,6 @@ size_t tbuf_get_used( TBUF *tbuf )
     }
     return tbuf->used;
 }
-
 
 /* Since we memcpy the data to our own buffer, IT IS UP TO THE
     CALLEE to clear their buffer as well.

@@ -7,7 +7,6 @@
    an html file, splitting to keep size issues from cropping up. THat is for another day,
    and may even be put into this program as well as cross platform.
 
-
     This program is not meant to be a full replacement for the SMS Backup and Restore app.
     It is meant to be a tool to read the files, and extract the data you want, and then
     save it to a file, or copy it to the clipboard, or whatever you want to do with it.

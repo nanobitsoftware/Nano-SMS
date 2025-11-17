@@ -7,7 +7,6 @@
    an html file, splitting to keep size issues from cropping up. THat is for another day,
    and may even be put into this program as well as cross platform.
 
-
     This program is not meant to be a full replacement for the SMS Backup and Restore app.
     It is meant to be a tool to read the files, and extract the data you want, and then
     save it to a file, or copy it to the clipboard, or whatever you want to do with it.
@@ -45,11 +44,7 @@
 
     */
 
-
     // Boiler plate; makes include files easier to manage, and keeps the code cleaner.
-
-
-
 
 #pragma once
 #include <windows.h>
@@ -57,9 +52,7 @@
 #include "nano-io.h"
 #include "nano-sms.h"
 
-#define WIN32_LEAN_AND_MEAN 
-
-
+#define WIN32_LEAN_AND_MEAN
 
 /* MSVC, hell, c in general, has poor support for boolean types.
    So we will define our own boolean type, and use it throughout the code.
@@ -76,7 +69,6 @@
 #define REPORT_ALLOCATION 0 // Set to TRUE to enable allocation reporting. This will report all allocations and deallocations.
 #define REPORT_DEALLOCATION 0 // Set to TRUE to enable deallocation reporting. This will report all deallocations and memory leaks.
 
-
 #define LOWER(c)        ((c) >= 'A' && (c) <= 'Z' ? (c)+'a'-'A' : (c))
 #define UPPER(c)        ((c) >= 'a' && (c) <= 'z' ? (c)+'A'-'a' : (c))
 
@@ -84,13 +76,7 @@
 
 #define DEBUG_FILE "c:\\nanobit\\debug.log"
 
-
-
-
 // DEFINES END
-
-
-
 
  // GLOBALS BEGIN
 
@@ -103,18 +89,12 @@ HINSTANCE g_hInst; // Global instance handle for the application.
 
 char ERROR_STRING[1024]; // Global error string for the application. Used to store error messages.
 
-#define  APP_NAME  "Nano-SMS" 
-#define  APP_VERSION  "0.1.0" 
+#define  APP_NAME  "Nano-SMS"
+#define  APP_VERSION  "0.1.0"
 #define  APP_AUTHOR  "Bioteq @ NanobitSoftware."
-#define  APP_LICENSE  "GPLv3" 
-
-
-
-
-
+#define  APP_LICENSE  "GPLv3"
 
 // GLOBALS END
-
 
 // FUNCTION MAPPING BEGIN
 #define strdup(x) str_dup1(x, __FILE__,__LINE__)
@@ -130,7 +110,6 @@ char ERROR_STRING[1024]; // Global error string for the application. Used to sto
 //#define strtok(x,y) _strtok(x, y)
 //#define localtime(x) _localtime(x)
 
-
 // FUNCTION MAPPING END
 
 // STRUCT PROTOYPES BEGIN
@@ -139,7 +118,6 @@ typedef struct smsbackup SMS_BACKUP;
 typedef struct smsitem SMS_ITEM;
 typedef struct callitem CALL_ITEM;
 typedef struct mediaitem MEDIA_ITEM;
-
 
 // STRUCT PROTOYPES END
 
@@ -151,7 +129,6 @@ enum sms_data_type
     SMS_CALL, // A ca;;
     SMS_MSG,// A text message.
     SMS_MEDIA  // A media item, such as an image, video, or audio file.
-
 } SMS_DATA_TYPE;
 
 enum sms_media_type
@@ -198,14 +175,11 @@ enum msg_state
     MSG_STATE_DRAFT, // Message is a draft.
     MSG_STATE_READ, // Message has been read. Comes after 'received' as to not interfer as read > received.
     MSG_STATE_DELETED // Message has been deleted.
-
 } MSG_STATE;
 
-
-
 // ENUMS END
-// 
-// 
+//
+//
 // DATA STRUCTURES BEGIN
 
 /* SMS Backup and Restore uses a form of XML for its storage of the sms, call and media
@@ -234,7 +208,6 @@ struct smsitem
     enum MSG_DATA_TYPE data_type; // The data type of the SMS item (message, media).
     MEDIA_ITEM** media; // Pointer to the media item, if any.
     int media_count; // Count of media items.
-
 };
 
 struct callitem
@@ -245,8 +218,6 @@ struct callitem
     enum CALL_DATA_TYPE type; // The type of the call item (outgoing, incoming, missed).
 };
 
-
-
 struct mediaitem
 {
     char* id; // The ID of the media item.
@@ -254,7 +225,6 @@ struct mediaitem
     char* file_path; // The file path of the media item.
     time_t date; // The date of the media item.
 };
-
 
 struct smsbackup
 { // Pointers of pointers. Everywhere! Oh my.
@@ -266,15 +236,12 @@ struct smsbackup
     int media_count; // Count of media items.
 };
 
-
-
 // DATA STRUCTURES END
 
 // PROTOTYPES BEGIN
 void     LOG( char*, ... ); // Externed from io.c
 void write_buffer( const char* );
 int read_string( char buf[], FILE* fp );
-
 
 /* Prototypes from nano-sms.c*/
 //BEGIN */
@@ -289,10 +256,7 @@ char* str_dup1( const char* str, char* file, int line );
 
 //BEGIN */
 
-
-
 //EMD
-
 
 /* Prototypes from memory.c*
 //BEGIN */
@@ -303,16 +267,11 @@ void* nano_malloc( size_t, const char*, int );
 void* nano_realloc( void* seg, size_t sz, const char* file, int line );
 char* str_dup1( const char* str, char* file, int line );
 
-
 //END
-
 
 // PROTOTYPES END
 
 // list of prototypes from memory.c
 void GiveError( char* wrong, BOOL KillProcess );
-
-
-
 
 SMS_BACKUP* XML_new( void );
