@@ -231,7 +231,7 @@ size_t chunk_xml_buffer( FILESTREAM *fs, char *buffer, size_t buffer_size, size_
     }
     else
     {
-        buffer = ( char * )nano_realloc( buffer, buffer_size + 1024, __FILE__, __LINE__ );
+        buffer = malloc( buffer_size + 1024 );//( char * )nano_realloc( buffer, buffer_size * 4, __FILE__, __LINE__ );
     }
     if ( !buffer )
     {
@@ -252,7 +252,7 @@ size_t chunk_xml_buffer( FILESTREAM *fs, char *buffer, size_t buffer_size, size_
         // STREAM_ERROR (-2), MEMORY_ERROR (-4). These must be caught before attempting memcpy.
         if ( bytes_read < 0 )
         {
-            fprintf( stderr, "Error reading from file stream: %d\n", bytes_read );
+            fprintf( stderr, "Error reading from file stream: %zu\n", bytes_read );
             break; // Error occurred during read
         }
 
@@ -269,10 +269,20 @@ size_t chunk_xml_buffer( FILESTREAM *fs, char *buffer, size_t buffer_size, size_
         bytes_to_read -= bytes_read;
         fs->seek_pos += bytes_read;
     }
+    if ( fs->seek_pos > fs->size )
+    {
+        memcpy( fs->buffer, buffer, buffer_size ); // COpy to in-struct memory
+    }
+    else
+    {
     // drop old fs->buffer
-    if ( fs->buffer )
-        nano_free( fs->buffer, __FILE__, __LINE__ );
-    fs->buffer = buffer; // Point fs->buffer to our new buffer.
+
+        if ( fs->buffer )
+            nano_free( fs->buffer, __FILE__, __LINE__ );
+        fs->buffer = buffer; // Point fs->buffer to our new buffer.
+    }
+    fs->file_read += total_bytes_read;
+
     fs->pos = 0; // Reset position for next read.
     return total_bytes_read;
 }
@@ -313,7 +323,7 @@ size_t fill_xml_buffer( FILESTREAM *fs, char *buffer )
         // STREAM_ERROR (-2), MEMORY_ERROR (-4). These must be caught before attempting memcpy.
         if ( bytes_read < 0 )
         {
-            fprintf( stderr, "Error reading from file stream: %d\n", bytes_read );
+            fprintf( stderr, "Error reading from file stream: %zu\n", bytes_read );
             break; // Error occurred during read
         }
 
@@ -498,7 +508,10 @@ BOOL do_parse( FILESTREAM *fs, char *data, size_t data_len, BOOL is_chunk )
     size_t len = 0;
 
     enum token_type cur_token, last_token, next_token;
+    cur_token = last_token = next_token = TOKEN_NONE;
     char *scratch_buf;
+
+    scratch_buf = ( char * )EMPTY_STRING[ 0 ];
 
     if ( !fs || !data || data_len == 0 )
     {

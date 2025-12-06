@@ -80,6 +80,8 @@ char *SMS_DB_ERROR = NULL; // Initialize SMS_DB_ERROR to NULL for similar reason
 int *SMS_REFID = 0; // The ID of the databse we're using today.
 SMS_BACKUP *sms_backup = NULL; // The SMS backup structure. Global entity.
 
+const char *EMPTY_STRING = "";
+
 //  Function to check or create the database.
 //  This function will be called at the start of the program to ensure that the database exists
 //  and that the necessary tables are created.
@@ -94,11 +96,25 @@ void LOG( char *fmt, ... )
     write_buffer( buf );
 }
 
+char *fmt_strip( char *fmt, ... )
+{
+    static char buf[ 15000 ];
+    if ( !fmt )
+    {
+        return ( char * )EMPTY_STRING;
+    }
+    va_list args;
+    va_start( args, fmt );
+    vsprintf( buf, fmt, args );
+    va_end( args );
+    return buf;
+}
+
 void check_or_create_db( void )
 {
     int rc;
     // Open the database file, or create it if it doesn't exist.
-    rc = sqlite3_open( "sms_backup.db", &SMS_DB );
+    rc = sqlite3_open( "c://nanobit//sms_backup.db", &SMS_DB );
     if ( rc )
     {
         fprintf( stderr, "Can't open database: %s\n", sqlite3_errmsg( SMS_DB ) );
@@ -133,6 +149,7 @@ WINAPI WinMain( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
     FILESTREAM *fs;
     char buf[ 1024 ];
 
+    LOG_MALLOC_ERROR( "Malloc Error Message Test. IGNORE." );
     _init_fs( );
 
     // Initialize our DB
@@ -140,12 +157,17 @@ WINAPI WinMain( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
     sms_backup = XML_new( );
     void *tttt;
 
+    char *mtest;
+
     tttt = malloc( 1024 );
+
     int i;
     for ( i = 1; i < 1024; i++ )
     {
-        tttt = realloc( tttt, i * 1024 );
+        tttt = malloc( i * 1024 ); // Intentionally leaking memory.
+        tttt = realloc( tttt, i * 2024 );
     }
+
     fs = fs_open( NULL, "c:\\nanobit\\sms.xml", "r" );
     /*if ( fs )
     {
@@ -171,8 +193,11 @@ WINAPI WinMain( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
     }
     */
     char *buffer;
+
     BOOL ttt = TRUE;
-    buffer = malloc( 1024 * 4096 ); // 4gb buffer + 1kb extra for safety.
+    buffer = nano_malloc( 1024 * 4096, __FILE__, __LINE__ ); // 4gb buffer + 1kb extra for safety.
+    fs->buffer = buffer;
+    fs->size = 1024 * 4096;
 
     if ( !buffer )
     {
@@ -183,7 +208,7 @@ WINAPI WinMain( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
     if ( !fs )
     {
         GiveError( "Failed to open file stream for c:\\nanobit\\sms.xml", TRUE );
-        free( buffer );
+   //     free( buffer );
         return 0;
     }
 
@@ -193,9 +218,9 @@ WINAPI WinMain( HINSTANCE hinst, HINSTANCE hprev, LPSTR argstr, int fun )
 
         size = chunk_xml_buffer( fs, buffer, 1024, 100 );
 
-        if ( size > 0 && buffer )
+        if ( !( size > 0 && buffer ) )
         {
-            LOG( "Got a chunk: %zu bytes\r\n", size );
+            LOG( "Failed to get a buffer (%p) of size: %zu bytes -- Take it up with accounting.\r\n", buffer, size );
         }
 
         if ( !size )
@@ -903,4 +928,29 @@ void GiveError( char *wrong, BOOL KillProcess )
     {
         return;
     }
+}
+
+inline void log_malloc_errors( const int line, const char *file, const char *func, const char *str, ... )
+{
+    static char buffer[ 4096 * 2 ];
+    va_list args;
+    va_start( args, str );
+    vsprintf( buffer, str, args );
+    va_end( args );
+    char final_buffer[ 4096 * 4 ];
+    sprintf( final_buffer, "-------------------------------------------------------------------------------\r\n"\
+             "|                                                                             |\r\n"\
+             "|                            Error: MALLOC or Memory System                   |\r\n"\
+             "|                    This is a FATAL ERROR. Please check the code             |\r\n"\
+             "|                    and ensure that nothing is broken or miscoded.           |\r\n"\
+             "|                    Function: %-47.47s|\r\n"\
+             "|                    File: %-51.51s|\r\n"\
+             "|                    Line: %-51d|\r\n"\
+             "|                    Reason for error:                                        |\r\n"\
+             "|-----------------------------------------------------------------------------|\r\n"\
+             "|%-72.72s     |\r\n"\
+             "|^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^|\r\n"\
+             "|_____________________________________________________________________________|\r\n"\
+             "|(%s)%s\r\n\r\n", __FUNCTION__, __FILE__, __LINE__, buffer, __DATE__, buffer );
+    LOG( final_buffer );
 }

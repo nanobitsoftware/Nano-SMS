@@ -47,12 +47,25 @@
     // Boiler plate; makes include files easier to manage, and keeps the code cleaner.
 
 #pragma once
+#include "LUA/lua.h"
 #include <windows.h>
 #include "nano-sql.h"
 #include "nano-io.h"
 #include "nano-sms.h"
 
 #define WIN32_LEAN_AND_MEAN
+
+#ifdef _UNICODE
+#if defined _M_IX86
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#elif defined _M_IA64
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='ia64' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#elif defined _M_X64
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#else
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#endif
+#endif
 
 /* MSVC, hell, c in general, has poor support for boolean types.
    So we will define our own boolean type, and use it throughout the code.
@@ -68,6 +81,9 @@
 #define IS_IN_DEBUGGING_MODE FALSE // Set to TRUE to enable debugging mode. This will enable more verbose logging and error checking.
 #define REPORT_ALLOCATION 0 // Set to TRUE to enable allocation reporting. This will report all allocations and deallocations.
 #define REPORT_DEALLOCATION 0 // Set to TRUE to enable deallocation reporting. This will report all deallocations and memory leaks.
+#define USE_OUR_MALLOC TRUE // Set to TRUE to use our custom malloc/free/realloc functions.
+#define BIT_ALIGN_MALLOC TRUE // Set to TRUE to align memory allocations to bit boundaries.
+#define BIT_ALIGNMENT_AMOUNT_MALLOC 8 // Set the bit alignment amount for memory allocations.
 
 #define LOWER(c)        ((c) >= 'A' && (c) <= 'Z' ? (c)+'a'-'A' : (c))
 #define UPPER(c)        ((c) >= 'a' && (c) <= 'z' ? (c)+'A'-'a' : (c))
@@ -102,6 +118,7 @@ char ERROR_STRING[1024]; // Global error string for the application. Used to sto
 #define free(x)   nano_free  (x, __FILE__, __LINE__)
 #define malloc(x) nano_malloc(x, __FILE__, __LINE__)
 #define realloc(x, y) nano_realloc (x,y, __FILE__, __LINE__)
+
 #define str_dup(x)  str_dup1(x, __FILE__, __LINE__)
 #define strprefix(x,y) strprefix1(x, y)
 //deefine sprintf(x, ...) _sprintf(x)
@@ -275,3 +292,5 @@ char* str_dup1( const char* str, char* file, int line );
 void GiveError( char* wrong, BOOL KillProcess );
 
 SMS_BACKUP* XML_new( void );
+char* fmt_strip( char* fmt, ... );
+inline void log_malloc_errors( const int line, const char* file, const char* func, const char* str, ... );

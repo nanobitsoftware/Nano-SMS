@@ -81,7 +81,7 @@
 
 #define MAX_TOKEN 2048
 
-/**
+ /**
  * Scratch buffer used for temporary reads. Size measured in bytes.
  * Keeps stack usage modest by using a defined scratch buffer size.
  */
@@ -90,12 +90,17 @@
 typedef struct filestream FILESTREAM; /**< Forward typedef for the file stream struct. */
 typedef struct _token TOKEN;       /**< Forward typedef for the token type enum. */
 typedef struct sym_table SYM_TABLE;
+
+extern const char* malloc_error_header;
+extern const char* EMPTY_STRING;
+
 /**
  * Convenience macro to test if a stream has an error state.
  * Evaluates to a boolean-like expression (TRUE/FALSE).
  *
  * @param x Pointer to FILESTREAM.
  */
+
 #define HAS_ERROR (x) ((x) ? (x->last_error == STREAM_EOF ||          \
                               x->last_error == STREAM_ERROR ||      \
                               x->last_error == STREAM_UNKNOWN) : FALSE)
@@ -182,6 +187,13 @@ typedef struct sym_table SYM_TABLE;
  * Value is an integer representing percent of total system memory.
  */
 static size_t ALLOWED_RAM_USAGE = 40; // This is in percentage of total system memory
+
+// Specifically   logging for sql related stuff. This macro is available to be reused and
+// repurposed for any need; just change the nouns.
+#define LOG_SQL_ERROR(x) ((LOG("SQL_ERROR (__FILE__)(__LINE__): %s", (x))))
+
+#define LOG_MALLOC_ERROR(...) (log_malloc_errors(__LINE__,__FILE__,__func__, __VA_ARGS__))
+//(fmt_strip(malloc_error_header, __FUNCTION__,__LINE__,__FILE__,"T","TT"))))
 
 /**
  * Token types used by the file parsing/tokenizing utilities.

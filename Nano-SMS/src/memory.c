@@ -37,6 +37,7 @@
 #include "sqlite3/sqlite3.h"
 
 #include "nano-sms.h"
+#include "nano-io.h"
 
 #undef malloc
 #undef free
@@ -48,7 +49,19 @@ unsigned long int free_calls = 0;
 unsigned long long int total_alloc;
 const unsigned char uninit = 0x0;
 typedef struct mem_heap HEAP;
-#define ALIGN 8
+
+#ifdef BIT_ALIGN_MALLOC
+#define ALIGN BIT_ALIGNMENT_AMOUNT_MALLOC
+#endif
+
+// We allow an error to form from the above defines. That is because
+// if you changed the bit alignment toggle in the header file then you
+// intend to use your own alignment, so you must supply your OWN #define ALIGN value.
+// Sorry.
+
+/*
+#define ALIGN 8 // Using our own alignment value because we don't want to use built in.
+*/
 
 unsigned long int alloced = 0;
 unsigned long int unalloced = 0;
@@ -163,7 +176,7 @@ void add_heap( HEAP *hp )
         LOG( "Allocation:" );
         LOG( "Calling file: %s", hp->file );
         LOG( "Calling line: %d", hp->line );
-        LOG( "Calling size: %zu", hp->size );
+        LOG( "Calling size: %lu", hp->size );
         LOG( "Total allocation: %5.5f %s", t_total, b_type == 0 ? "bytes" : b_type == 1 ? "kilobytes" : b_type == 2 ? "megabytes" : "gigabytes" );
         LOG( "Calling address (returned): 0X%X", hp->m_add );
         LOG( "--------------------------------------------------------------------------------------------------\r\n" );
@@ -490,7 +503,7 @@ void nano_free( void *seg, const char *file, int line )
 
     if ( !seg || seg == NULL )
     {
-        LOG( "Free passed an invalid segment. Bailing." );
+        LOG_MALLOC_ERROR( "Free passed an invalid segment. Bailing." );
         return;
     }
 
@@ -508,7 +521,7 @@ void nano_free( void *seg, const char *file, int line )
         size_t stored = *( ( size_t * )header );
         if ( ( stored & MALLOC_MAGIC ) != MALLOC_MAGIC )
         {
-            LOG( "Memory error. Bailing. ID:%zu -- With Magic:%zu", stored, ( stored & MALLOC_MAGIC ) );
+            LOG_MALLOC_ERROR( "Memory error. Bailing. ID:%zu -- With Magic:%zu", stored, ( stored & MALLOC_MAGIC ) );
             return;
         }
 
@@ -524,30 +537,94 @@ void nano_free( void *seg, const char *file, int line )
     }
     else
     {
-        LOG( "Memory error: %p. (%s/%d)", seg, file, line );
+        LOG_MALLOC_ERROR( "Memory error: %p. (%s/%d)", seg, file, line );
     }
     return;
 }
 
 void *nano_realloc( void *seg, size_t sz, const char *file, int line )
 {
-    if ( !seg )
+    size_t stored = 0;
+    size_t size = 0;
+    BOOL hasmagic = FALSE;
+
+    if ( !seg ) // THIS SHOULD ALWAYS BE FIRST BEFORE DOING ANY MATH ON IT.
     {
-        LOG( "nano_realloc: NULL segment passed. File: %s, line: %d", file, line );
+        LOG_MALLOC_ERROR( "nano_realloc: NULL segment passed. File: %s, line: %d", file, line );
         return NULL;
     }
 
-    size_t aligned_size = sz;
-    while ( ( aligned_size + sizeof( size_t ) ) % ALIGN != 0 )
+    char *r = ( char * )seg - sizeof( size_t );
+    size_t magic = *( ( size_t * )r );
+
+    if ( ( magic & MALLOC_MAGIC ) != MALLOC_MAGIC )
     {
-        aligned_size++;
+        LOG_MALLOC_ERROR( "Memory error. Bailing. ID:%zu -- With Magic:%zu", magic, ( magic & MALLOC_MAGIC ) );
+        hasmagic = TRUE;
+        return NULL;
     }
 
-    char *header = seg;//= ( char * )seg - sizeof( size_t );
+    if ( !seg )
+    {
+        LOG_MALLOC_ERROR( "nano_realloc: NULL segment passed. File: %s, line: %d", file, line );
+        return NULL;
+    }
+    while ( ( sz + sizeof( size_t ) ) % ALIGN != 0 )
+    {
+        sz++;
+    }
+    //char *header = ( char * )seg - sizeof( size_t );
+    //realloc( header, sz + sizeof( size_t ) + 16 );
+    seg = realloc( r, sz + sizeof( size_t ) + 16 );
+
+    *( ( size_t * )seg ) = sz | MALLOC_MAGIC;
+    total_alloc += sz + sizeof( size_t );
+
+    return ( char * )seg + sizeof( size_t );
+}
+    /*/
+    char *header = ( char * )seg - sizeof( size_t );
+    stored = *( ( size_t * )header );
+    if ( ( stored & MALLOC_MAGIC ) != MALLOC_MAGIC )
+    {
+        LOG_MALLOC_ERROR( "Realloc error. Bailing. ID:%zu -- With Magic:%zu", stored, ( stored & MALLOC_MAGIC ) );
+        return NULL;
+    }
+
+    size = ( stored & ~MALLOC_MAGIC ) + sizeof( size_t );
+
+    sz += size;
+
+    while ( ( sz + sizeof( size_t ) ) % ALIGN != 0 )
+    {
+        sz++;
+    }
+
+    mem = nano_malloc( sz + sizeof( size_t ), __FILE__, __LINE__ );
+
+    if ( !mem )
+    {
+        LOG_MALLOC_ERROR( "nano_realloc: Memory allocation failed! File: %s, line: %d, size: %zu", file, line, sz );
+        GiveError( "Memory allocation failed", TRUE );
+        exit( 1 );
+        return NULL;
+    }
+
+    total_alloc += sz + sizeof( size_t );
+
+   // memcpy( ( char * )mem + sizeof( size_t ), seg, stored );
+    realloc( mem, sz );
+
+    nano_free( mem, __FILE__, __LINE__ );
+
+    return ( char * )seg + sizeof( size_t );
+}
+*/
+   /* char *header = ( char * )seg - sizeof( size_t );
     size_t stored = *( ( size_t * )header );
     if ( ( stored & MALLOC_MAGIC ) != MALLOC_MAGIC )
     {
-        LOG( "nano_realloc: Memory error. Invalid magic. File: %s, line: %d", file, line );
+        LOG_MALLOC_ERROR( "nano_realloc: Memory error. Invalid magic. File: %s, line: %d", file, line );
         return NULL;
     }
 
@@ -556,7 +633,7 @@ void *nano_realloc( void *seg, size_t sz, const char *file, int line )
     void *new_mem = realloc( header, aligned_size + sizeof( size_t ) );
     if ( !new_mem )
     {
-        LOG( "nano_realloc: Memory reallocation failed! File: %s, line: %d, size: %zu", file, line, aligned_size );
+        LOG_MALLOC_ERROR( "nano_realloc: Memory reallocation failed! File: %s, line: %d, size: %zu", file, line, aligned_size );
         GiveError( "Memory reallocation failed", TRUE );
         exit( 1 );
         HEAP_UNLOCK( );
@@ -588,7 +665,8 @@ void *nano_realloc( void *seg, size_t sz, const char *file, int line )
     HEAP_UNLOCK( );
 
     return ( char * )new_mem + sizeof( size_t );
-}
+
+    */
 
 void return_usage( void )
 {

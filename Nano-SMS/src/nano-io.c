@@ -43,7 +43,7 @@
 // Globals for this scope.
 
 char stream_scratch[ STREAM_SCRATCH ] = "\0"; // The scratch buffer for reading.
-extern void LOG( char *fmt, ... );
+extern void x( char *fmt, ... );
 
 // We keep this struct to this scope so it cannot be used elsewhere.
 // This is basically a private data struct.
@@ -817,7 +817,8 @@ long long int fs_read( FILESTREAM *fs, size_t size )
     }
     stop = time( NULL );
     total = stop - start;
-    LOG( "Time taken to read: %zu seconds\n", total );
+
+    //LOG( "Time taken to read: %zu seconds\n", total );
     start = time( NULL );
 
     fs->total_lines = 0;
@@ -831,11 +832,11 @@ long long int fs_read( FILESTREAM *fs, size_t size )
 
     stop = time( NULL );
     total = stop - start;
-    LOG( "Time taken to count lines: %zu seconds\n", total );
+    //LOG( "Time taken to count lines: %zu seconds\n", total );
 
     fs->length += bytes_read;
     fs->file_read += bytes_read;
-    fs->buffer[ fs->length ] = '\0'; // Null-terminate the buffer.
+    fs->buffer[ 250 ] = '\0'; // Null-terminate the buffer.
     return ( long long  int )bytes_read; // Return as int to preserve negative error codes when called.
 }
 

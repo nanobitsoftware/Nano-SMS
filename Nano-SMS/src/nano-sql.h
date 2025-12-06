@@ -37,7 +37,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "sqlite3/sqlite3.h"
-#define LOG_SQL_ERROR(x) ((LOG("SQL_ERROR (__FILE__)(__LINE__): %s", (x))))
 
 #define SET_PRI(x,y) ((x) ? x->priority = y : LOG_SQL_ERROR ("TBUF is NULL, cannot set priority."))
 #define GET_PRI(x) ((x) ? x->priority : (LOG_SQL_ERROR ("TBUF is NULL, cannot get priority."), -9999))

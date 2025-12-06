@@ -147,6 +147,8 @@
       <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
       <DiagnosticsFormat>Classic</DiagnosticsFormat>
       <DisableSpecificWarnings>5105</DisableSpecificWarnings>
+      <BrowseInformation>true</BrowseInformation>
+      <AdditionalOptions>-DNOSMSUSAGE=1</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -188,6 +190,40 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\DB.c" />
+    <ClCompile Include="src\LUA\lapi.c" />
+    <ClCompile Include="src\LUA\lauxlib.c" />
+    <ClCompile Include="src\LUA\lbaselib.c" />
+    <ClCompile Include="src\LUA\lcode.c" />
+    <ClCompile Include="src\LUA\lcorolib.c" />
+    <ClCompile Include="src\LUA\lctype.c" />
+    <ClCompile Include="src\LUA\ldblib.c" />
+    <ClCompile Include="src\LUA\ldebug.c" />
+    <ClCompile Include="src\LUA\ldo.c" />
+    <ClCompile Include="src\LUA\ldump.c" />
+    <ClCompile Include="src\LUA\lfunc.c" />
+    <ClCompile Include="src\LUA\lgc.c" />
+    <ClCompile Include="src\LUA\linit.c" />
+    <ClCompile Include="src\LUA\liolib.c" />
+    <ClCompile Include="src\LUA\llex.c" />
+    <ClCompile Include="src\LUA\lmathlib.c" />
+    <ClCompile Include="src\LUA\lmem.c" />
+    <ClCompile Include="src\LUA\loadlib.c" />
+    <ClCompile Include="src\LUA\lobject.c" />
+    <ClCompile Include="src\LUA\lopcodes.c" />
+    <ClCompile Include="src\LUA\loslib.c" />
+    <ClCompile Include="src\LUA\lparser.c" />
+    <ClCompile Include="src\LUA\lstate.c" />
+    <ClCompile Include="src\LUA\lstring.c" />
+    <ClCompile Include="src\LUA\lstrlib.c" />
+    <ClCompile Include="src\LUA\ltable.c" />
+    <ClCompile Include="src\LUA\ltablib.c" />
+    <ClCompile Include="src\LUA\ltm.c" />
+    <ClCompile Include="src\LUA\lua.c" />
+    <ClCompile Include="src\LUA\luac.c" />
+    <ClCompile Include="src\LUA\lundump.c" />
+    <ClCompile Include="src\LUA\lutf8lib.c" />
+    <ClCompile Include="src\LUA\lvm.c" />
+    <ClCompile Include="src\LUA\lzio.c" />
     <ClCompile Include="src\nano-io.c" />
     <ClCompile Include="src\memory.c" />
     <ClCompile Include="src\nano-sms.c" />
@@ -200,6 +236,34 @@
     <ClCompile Include="src\XML-snarf.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\LUA\lapi.h" />
+    <ClInclude Include="src\LUA\lauxlib.h" />
+    <ClInclude Include="src\LUA\lcode.h" />
+    <ClInclude Include="src\LUA\lctype.h" />
+    <ClInclude Include="src\LUA\ldebug.h" />
+    <ClInclude Include="src\LUA\ldo.h" />
+    <ClInclude Include="src\LUA\lfunc.h" />
+    <ClInclude Include="src\LUA\lgc.h" />
+    <ClInclude Include="src\LUA\ljumptab.h" />
+    <ClInclude Include="src\LUA\llex.h" />
+    <ClInclude Include="src\LUA\llimits.h" />
+    <ClInclude Include="src\LUA\lmem.h" />
+    <ClInclude Include="src\LUA\lobject.h" />
+    <ClInclude Include="src\LUA\lopcodes.h" />
+    <ClInclude Include="src\LUA\lopnames.h" />
+    <ClInclude Include="src\LUA\lparser.h" />
+    <ClInclude Include="src\LUA\lprefix.h" />
+    <ClInclude Include="src\LUA\lstate.h" />
+    <ClInclude Include="src\LUA\lstring.h" />
+    <ClInclude Include="src\LUA\ltable.h" />
+    <ClInclude Include="src\LUA\ltm.h" />
+    <ClInclude Include="src\LUA\lua.h" />
+    <ClInclude Include="src\LUA\lua.hpp" />
+    <ClInclude Include="src\LUA\luaconf.h" />
+    <ClInclude Include="src\LUA\lualib.h" />
+    <ClInclude Include="src\LUA\lundump.h" />
+    <ClInclude Include="src\LUA\lvm.h" />
+    <ClInclude Include="src\LUA\lzio.h" />
     <ClInclude Include="src\nano-io.h" />
     <ClInclude Include="src\nano-sms.h" />
     <ClInclude Include="src\nano-sql.h" />
@@ -211,6 +275,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" />
+    <None Include="src\LUA\Makefile" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
