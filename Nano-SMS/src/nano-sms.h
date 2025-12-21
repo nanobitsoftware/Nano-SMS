@@ -103,7 +103,7 @@
 HWND mainwindow; // The main window handle, used for all windows.
 HINSTANCE g_hInst; // Global instance handle for the application.
 
-char ERROR_STRING[1024]; // Global error string for the application. Used to store error messages.
+char ERROR_STRING[ 1024 ]; // Global error string for the application. Used to store error messages.
 
 #define  APP_NAME  "Nano-SMS"
 #define  APP_VERSION  "0.1.0"
@@ -211,10 +211,10 @@ enum msg_state
 
 struct smsitem
 {
-    char* id; // The ID of the SMS item.
-    char* from; // The sender of the SMS item.
-    char* address; // The address of the SMS item.
-    char* body; // The body of the SMS item.
+    char *id; // The ID of the SMS item.
+    char *from; // The sender of the SMS item.
+    char *address; // The address of the SMS item.
+    char *body; // The body of the SMS item.
     time_t date; // The date of the SMS item.
     time_t date_sent; // The date the SMS item was sent.
     time_t date_received; // The date the SMS item was received.
@@ -223,42 +223,42 @@ struct smsitem
     enum MSG_TYPE type;     // The type of the SMS item (text, image, video, audio, other).
     enum MSG_STATE state;    // The state of the SMS item (sent, received, draft, deleted, failed).
     enum MSG_DATA_TYPE data_type; // The data type of the SMS item (message, media).
-    MEDIA_ITEM** media; // Pointer to the media item, if any.
+    MEDIA_ITEM **media; // Pointer to the media item, if any.
     int media_count; // Count of media items.
 };
 
 struct callitem
 {
-    char* id; // The ID of the call item.
-    char* address; // The address of the call item.
+    char *id; // The ID of the call item.
+    char *address; // The address of the call item.
     time_t date; // The date of the call item.
     enum CALL_DATA_TYPE type; // The type of the call item (outgoing, incoming, missed).
 };
 
 struct mediaitem
 {
-    char* id; // The ID of the media item.
-    char* address; // The address of the media item.
-    char* file_path; // The file path of the media item.
+    char *id; // The ID of the media item.
+    char *address; // The address of the media item.
+    char *file_path; // The file path of the media item.
     time_t date; // The date of the media item.
 };
 
 struct smsbackup
 { // Pointers of pointers. Everywhere! Oh my.
-    SMS_ITEM* sms_items; // Array of SMS items.
+    SMS_ITEM *sms_items; // Array of SMS items.
     int sms_count; // Count of SMS items.
-    CALL_ITEM* call_items; // Array of call items.
+    CALL_ITEM *call_items; // Array of call items.
     int call_count; // Count of call items.
-    MEDIA_ITEM* media_items; // Array of media items.
+    MEDIA_ITEM *media_items; // Array of media items.
     int media_count; // Count of media items.
 };
 
 // DATA STRUCTURES END
 
 // PROTOTYPES BEGIN
-void     LOG( char*, ... ); // Externed from io.c
-void write_buffer( const char* );
-int read_string( char buf[], FILE* fp );
+void     LOG( char *, ... ); // Externed from io.c
+void write_buffer( const char * );
+int read_string( char buf[], FILE *fp );
 
 /* Prototypes from nano-sms.c*/
 //BEGIN */
@@ -266,10 +266,10 @@ int read_string( char buf[], FILE* fp );
 
 /* Prototypes from string.c*/
 //bool str_cmp( const char* astr, const char* bstr );
-BOOL str_search( const char* str );
-BOOL string_compare( const char* ostr, const char* tstr );
-BOOL strprefix1( const char* astr, const char* bstr );
-char* str_dup1( const char* str, char* file, int line );
+BOOL str_search( const char *str );
+BOOL string_compare( const char *ostr, const char *tstr );
+BOOL strprefix1( const char *astr, const char *bstr );
+char *str_dup1( const char *str, char *file, int line );
 
 //BEGIN */
 
@@ -278,19 +278,19 @@ char* str_dup1( const char* str, char* file, int line );
 /* Prototypes from memory.c*
 //BEGIN */
 
-void GiveError( char* wrong, BOOL KillProcess );
-void nano_free( void* seg, const char* file, int line );
-void* nano_malloc( size_t, const char*, int );
-void* nano_realloc( void* seg, size_t sz, const char* file, int line );
-char* str_dup1( const char* str, char* file, int line );
+void GiveError( char *wrong, BOOL KillProcess );
+void nano_free( void *seg, const char *file, int line );
+void *nano_malloc( size_t, const char *, int );
+void *nano_realloc( void *seg, size_t sz, const char *file, int line );
+char *str_dup1( const char *str, char *file, int line );
 
 //END
 
 // PROTOTYPES END
 
 // list of prototypes from memory.c
-void GiveError( char* wrong, BOOL KillProcess );
+void GiveError( char *wrong, BOOL KillProcess );
 
-SMS_BACKUP* XML_new( void );
-char* fmt_strip( char* fmt, ... );
-inline void log_malloc_errors( const int line, const char* file, const char* func, const char* str, ... );
+SMS_BACKUP *XML_new( void );
+char *fmt_strip( char *fmt, ... );
+inline void log_malloc_errors( const int line, const char *file, const char *func, const char *str, ... );

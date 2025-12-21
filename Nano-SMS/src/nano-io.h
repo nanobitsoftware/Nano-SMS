@@ -81,6 +81,8 @@
 
 #define MAX_TOKEN 2048
 
+#define MEM_WATCHDOG 30 // Amount of memory percent usage allowed before we start freaking out. This is personal usage.
+
  /**
  * Scratch buffer used for temporary reads. Size measured in bytes.
  * Keeps stack usage modest by using a defined scratch buffer size.
@@ -91,8 +93,8 @@ typedef struct filestream FILESTREAM; /**< Forward typedef for the file stream s
 typedef struct _token TOKEN;       /**< Forward typedef for the token type enum. */
 typedef struct sym_table SYM_TABLE;
 
-extern const char* malloc_error_header;
-extern const char* EMPTY_STRING;
+extern const char *malloc_error_header;
+extern const char *EMPTY_STRING;
 
 /**
  * Convenience macro to test if a stream has an error state.
@@ -240,7 +242,7 @@ enum token_type
 
 struct sym_table
 {
-    char* symbol;
+    char *symbol;
     enum token_type type;
 };
 
@@ -283,21 +285,21 @@ struct _token
      * May be NULL if this is the first token or if no prior token exists.
      * Used for backtracking or context lookup during parsing.
      */
-    TOKEN* last_token;
+    TOKEN *last_token;
 
     /**
      * Pointer to the next logical token in the parse sequence.
      * Used for lookahead and forward reference during parsing.
      * Note: This is NOT part of a linked list; it's a convenience reference.
      */
-    TOKEN* next_token;
+    TOKEN *next_token;
 
     /**
      * Pointer to the root token of the parse tree or hierarchy.
      * Allows traversal back to the top-level token in nested structures.
      * May be NULL for root-level tokens or uninitialized contexts.
      */
-    TOKEN* root;
+    TOKEN *root;
 
     /* ===== Type Information ===== */
 
@@ -323,7 +325,7 @@ struct _token
      * May be NULL if the token has no string representation.
      * Use `len` to determine the valid length of this string.
      */
-    char* value;
+    char *value;
 
     /**
      * Length of the string pointed to by `value` in bytes.
@@ -347,7 +349,7 @@ struct _token
      * In chunk mode, use `str_start` and `str_end` instead for position tracking.
      * May be NULL if position tracking is disabled or unavailable.
      */
-    char* point;
+    char *point;
 
     /**
      * Starting position (offset) of this token within the source data.
@@ -388,9 +390,9 @@ struct _token
  */
 struct filestream
 {
-    char* buffer;        // The buffer to hold the file data. Allocated dynamically, used for streaming file contents.
-    char file_path[_MAX_PATH]; // The path to the file. Stores the full path for reference and operations.
-    char file_name[_MAX_FNAME]; // The name of the file. Used for display/logging and file management.
+    char *buffer;        // The buffer to hold the file data. Allocated dynamically, used for streaming file contents.
+    char file_path[ _MAX_PATH ]; // The path to the file. Stores the full path for reference and operations.
+    char file_name[ _MAX_FNAME ]; // The name of the file. Used for display/logging and file management.
     size_t size;         // The size of the buffer. Indicates the total allocated memory for 'buffer'.
     size_t length;       // The length of the data in the buffer. Actual data size currently held.
     size_t pos;          // The current position in the buffer. Used for reading/writing operations.
@@ -401,14 +403,15 @@ struct filestream
     time_t opened;       // The time the file was opened. For logging and auditing purposes.
     time_t modified;     // The time the file was last modified. Useful for file change detection.
     time_t accessed;     // The time the file was last accessed. For tracking usage and access patterns.
-    FILE* file;          // The file pointer. Standard C FILE* used for file I/O operations.
-    TOKEN         tokens[MAX_TOKEN];
+    FILE *file;          // The file pointer. Standard C FILE* used for file I/O operations.
+    TOKEN         tokens[ MAX_TOKEN ];
     size_t token_count; // TOtal counts overall.
     int last_token;      // The last token read from the file. Used in parsing routines.
     int cur_token;       // The current token being processed. For stateful parsing.
     int last_error;      // Error flag. Stores the last error code encountered.
     size_t total_lines;     // Internal number just for ease of parsing.
-    enum {
+    enum
+    {
         STATE_READY,     // Stream is ready for operations.
         STATE_ANALYZE,   // Stream is being analyzed (e.g., format detection).
         STATE_OPEN,      // Stream is open.
@@ -477,7 +480,7 @@ BOOL unregister_all_streams( void );
  * @param path Null-terminated path to search for.
  * @return Pointer to FILESTREAM if found, otherwise NULL.
  */
-FILESTREAM* _fs_find_handle( char* path );
+FILESTREAM *_fs_find_handle( char *path );
 
 /**
  * Register a FILESTREAM handle in the global registry.
@@ -485,7 +488,7 @@ FILESTREAM* _fs_find_handle( char* path );
  * @param fs Pointer to FILESTREAM to register.
  * @return TRUE on success, FALSE otherwise.
  */
-BOOL _register_fs_handle( FILESTREAM* fs );
+BOOL _register_fs_handle( FILESTREAM *fs );
 
 /**
  * Unregister a previously registered FILESTREAM handle.
@@ -493,7 +496,7 @@ BOOL _register_fs_handle( FILESTREAM* fs );
  * @param fs Pointer to FILESTREAM to unregister.
  * @return TRUE on success, FALSE otherwise.
  */
-BOOL _unregister_fs_handle( FILESTREAM* fs );
+BOOL _unregister_fs_handle( FILESTREAM *fs );
 
 /**
  * Allocate and initialize a new FILESTREAM and record the allocation site.
@@ -502,7 +505,7 @@ BOOL _unregister_fs_handle( FILESTREAM* fs );
  * @param file Source filename where allocation is requested (for diagnostics).
  * @return Pointer to a newly allocated FILESTREAM, or NULL on failure.
  */
-FILESTREAM* _new_fs_stream( int line, char* file );
+FILESTREAM *_new_fs_stream( int line, char *file );
 
 /**
  * Free a FILESTREAM and optionally log the freeing site.
@@ -512,14 +515,14 @@ FILESTREAM* _new_fs_stream( int line, char* file );
  * @param file Source filename where free is requested.
  * @return TRUE on success, FALSE on failure.
  */
-BOOL _free_fs_stream( FILESTREAM* fs, int line, char* file );
+BOOL _free_fs_stream( FILESTREAM *fs, int line, char *file );
 
 /**
  * Write debug/log information for a FILESTREAM to configured output.
  *
  * @param fs Pointer to stream to log.
  */
-void logfs( FILESTREAM* fs );
+void logfs( FILESTREAM *fs );
 
 /**
  * Open a stream for the given path and mode. If 'fs' is non-null it will
@@ -530,7 +533,7 @@ void logfs( FILESTREAM* fs );
  * @param mode fopen-style mode string (e.g., "rb").
  * @return Pointer to an opened FILESTREAM or NULL on error.
  */
-FILESTREAM* fs_open( FILESTREAM* fs, const char* path, const char* mode );
+FILESTREAM *fs_open( FILESTREAM *fs, const char *path, const char *mode );
 
 /**
  * Close a FILESTREAM and optionally perform additional cleanup.
@@ -539,14 +542,14 @@ FILESTREAM* fs_open( FILESTREAM* fs, const char* path, const char* mode );
  * @param cleanup If TRUE perform full cleanup and free resources.
  * @return TRUE on success, FALSE on failure.
  */
-BOOL fs_close( FILESTREAM* fs, BOOL cleanup );
+BOOL fs_close( FILESTREAM *fs, BOOL cleanup );
 
 /**
  * Simple variadic logging helper used throughout the project.
  *
  * @param fmt printf-style format string followed by arguments.
  */
-void LOG( char* fmt, ... );
+void LOG( char *fmt, ... );
 
 /**
  * Convert size_type enum value to a human-friendly string.
@@ -554,7 +557,7 @@ void LOG( char* fmt, ... );
  * @param type The size type enum value.
  * @return Pointer to a static string describing the type (not owned).
  */
-char* size_type_to_string( int type );
+char *size_type_to_string( int type );
 
 /**
  * Choose an appropriate size_type from a given length in bytes.
@@ -562,7 +565,7 @@ char* size_type_to_string( int type );
  * @param len Length in bytes.
  * @return Pointer to a static string representation.
  */
-char* size_type_from_len( size_t len );
+char *size_type_from_len( size_t len );
 
 /**
  * Convert a raw size value into a human-readable floating value (e.g., MB).
@@ -582,7 +585,7 @@ double double_to_human( size_t hr_size );
  *         Error codes: STREAM_EOF (-1), STREAM_ERROR (-2), MEMORY_ERROR (-4).
  *         NOTE: Return type is int (not size_t) to properly handle error values.
  */
-long long int fs_read( FILESTREAM* fs, size_t size );
+long long int fs_read( FILESTREAM *fs, size_t size );
 
 /**
  * Initialize stream subsystem resources. Should be called once at startup.
@@ -598,5 +601,6 @@ BOOL _init_fs( void );
 size_t get_total_system_memory( void );
 size_t get_used_system_memory( void );
 size_t get_free_system_memory( void );
-TOKEN* new_token( void );
-BOOL free_token( TOKEN* token );
+size_t get_own_memory_usage( void );
+TOKEN *new_token( void );
+BOOL free_token( TOKEN *token );

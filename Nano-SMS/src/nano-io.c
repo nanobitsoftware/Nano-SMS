@@ -36,6 +36,7 @@
 #include <math.h>
 #include <time.h>
 #include <stdarg.h>
+#include <psapi.h>
 
 #include "nano-io.h"
 #include "nano-sms.h"
@@ -864,6 +865,17 @@ size_t get_free_system_memory( void )
     return ( size_t )statex.ullAvailPhys;
 }
 
+size_t get_own_memory_usage( void )
+{
+    PROCESS_MEMORY_COUNTERS pmc;
+    HANDLE hProcess = GetCurrentProcess( );
+    if ( GetProcessMemoryInfo( hProcess, &pmc, sizeof( pmc ) ) )
+    {
+        return ( size_t )pmc.WorkingSetSize;
+    }
+    return 0;
+}
+
 TOKEN *new_token( void )
 {
     TOKEN *token = ( TOKEN * )malloc( sizeof( TOKEN ) );
@@ -877,6 +889,34 @@ TOKEN *new_token( void )
     token->last_token = NULL;
     token->next_token = NULL;
     return token;
+}
+
+BOOL memory_watchdog( size_t threshold )
+{
+    if ( threshold <= 0 || threshold > 100 )
+    {
+        LOG( "Invalid threshold percentage for memory watchdog: %zu. Must be between 1 and 100.\r\n"
+             "Setting to built in limit of %d", threshold, MEM_WATCHDOG );
+        threshold = MEM_WATCHDOG;
+    }
+    size_t mem_total = get_total_system_memory( );
+    size_t mem_used = get_used_system_memory( );
+    size_t mem_free = get_free_system_memory( );
+    size_t mem_own = get_own_memory_usage( );
+
+    // Calculate what threshold-percent is in bytes of free memory.
+    size_t thresh = ( mem_free / 100 ) * threshold; // threshold percent of free memory in bytes.
+    // Calculate our used memory from percent to bytes.
+    size_t used_thresh = ( mem_own / 100 ) * threshold; // threshold percent of own memory in bytes.
+
+    // If used_thresh is >= thresh, we have exceeded our limit. Allow watchdog to know.
+    if ( used_thresh >= thresh )
+    {
+        // Spit out a debug log just in case we need to know.
+        LOG( "Memory watchdog triggered! Used memory: %zu bytes exceeds threshold: %zu bytes", used_thresh, thresh );
+        return TRUE; // Memory usage exceeded threshold.
+    }
+    return FALSE; // Memory usage is within limits.
 }
 
 BOOL free_token( TOKEN *token )
